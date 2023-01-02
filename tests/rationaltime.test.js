@@ -3,7 +3,6 @@ const factory = require('../install/opentime');
 let lib;
 
 beforeAll(async () => {
-    console.log(factory)
     lib = await factory();
 });
 

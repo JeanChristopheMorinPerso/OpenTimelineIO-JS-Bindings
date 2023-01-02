@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest tests/*"
   },
   "author": "Contributors to the OpenTimelineIO project <otio-discussion@lists.aswf.io>",
   "license": "Apache-2.0",
