@@ -1,4 +1,5 @@
 const factory = require('../install/opentime');
+const { expect, test, beforeAll } = require('@jest/globals');
 
 let lib;
 
@@ -29,13 +30,32 @@ test('create', () => {
     expect(t.rate).toEqual(1.0)
 });
 
-//     def test_equality(self):
-//         t1 = otio.opentime.RationalTime(30.2)
-//         self.assertEqual(t1, t1)
-//         t2 = otio.opentime.RationalTime(30.2)
-//         self.assertTrue(t1 is not t2)
-//         self.assertEqual(t1, t2)
+test('string', () => {
+    t1 = new lib.RationalTime(0.0, 2.0)
+    expect(t1.toString()).toEqual('RationalTime(value=0, rate=2)')
 
+    t2 = new lib.RationalTime(10.5, 24.8)
+    expect(t2.toString()).toEqual('RationalTime(value=10.5, rate=24.8)')
+})
+
+test('equality', () => {
+    const t1 = new lib.RationalTime(30.1)
+    expect(t1).toEqual(t1)
+
+    const t2 = new lib.RationalTime(30.1)
+    expect(t2).not.toBe(t1)
+    expect(t2).toEqual(t1)
+});
+
+test('inequality', () => {
+    t1 = new lib.RationalTime(30.2)
+    t2 = new lib.RationalTime(33.2)
+    expect(t1 !== t2).toBe(true)
+    expect(t1 != t2).toBe(true)
+
+    const t3 = new lib.RationalTime(30.2)
+    expect(t3 !== t1).toBe(false)
+})
 //     def test_inequality(self):
 //         t1 = otio.opentime.RationalTime(30.2)
 //         self.assertEqual(t1, t1)
@@ -46,27 +66,29 @@ test('create', () => {
 //         self.assertTrue(t1 is not t3)
 //         self.assertFalse(t1 != t3)
 
-//     def test_comparison(self):
-//         t1 = otio.opentime.RationalTime(15.2)
-//         t2 = otio.opentime.RationalTime(15.6)
-//         self.assertTrue(t1 < t2)
-//         self.assertTrue(t1 <= t2)
-//         self.assertFalse(t1 > t2)
-//         self.assertFalse(t1 >= t2)
+test('comparison', () => {
+    t1 = new lib.RationalTime(15.2)
+    t2 = new lib.RationalTime(15.6)
+    console.log(t1.valueOf())
+    expect(t1 < t2).toBe(true)
+    expect(t1 <= t2).toBe(true)
+    expect(t1 > t2).toBe(false)
+    expect(t1 >= t2).toBe(false)
 
-//         # Ensure the equality case of the comparisons works correctly
-//         t3 = otio.opentime.RationalTime(30.4, 2)
-//         self.assertTrue(t1 <= t3)
-//         self.assertTrue(t1 >= t3)
-//         self.assertTrue(t3 <= t1)
-//         self.assertTrue(t3 >= t1)
+    // Ensure the equality case of the comparisons works correctly
+    t3 = new lib.RationalTime(30.4, 2)
+    expect(t1 <= t3).toBe(true)
+    expect(t1 >= t3).toBe(true)
+    expect(t3 <= t1).toBe(true)
+    expect(t3 >= t1).toBe(true)
 
-//         # test implicit base conversion
-//         t2 = otio.opentime.RationalTime(15.6, 48)
-//         self.assertTrue(t1 > t2)
-//         self.assertTrue(t1 >= t2)
-//         self.assertFalse(t1 < t2)
-//         self.assertFalse(t1 <= t2)
+    // test implicit base conversion
+    t2 = new lib.RationalTime(15.6, 48)
+    expect(t1 > t2).toBe(true)
+    expect(t1 >= t2).toBe(true)
+    expect(t1 < t2).toBe(false)
+    expect(t1 <= t2).toBe(false)
+})
 
 //     def test_copy(self):
 //         t1 = otio.opentime.RationalTime(18, 24)

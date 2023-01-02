@@ -12,6 +12,7 @@
   "author": "Contributors to the OpenTimelineIO project <otio-discussion@lists.aswf.io>",
   "license": "Apache-2.0",
   "dependencies": {
+    "@jest/globals": "^29.3.1",
     "jest": "^29.3.1"
   }
 }

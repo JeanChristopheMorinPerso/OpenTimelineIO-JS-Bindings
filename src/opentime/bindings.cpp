@@ -1,13 +1,33 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
 
+#include "functional"
 #include "opentime/rationalTime.h"
 #include "opentime/timeRange.h"
 #include "opentime/timeTransform.h"
+#include <cstdio>
 #include <emscripten/bind.h>
+#include <memory>
+#include <string>
 
 namespace ems = emscripten;
 using namespace opentime;
+
+template <typename... Args>
+std::string
+string_printf(char const* format, Args... args)
+{
+    char   buffer[4096];
+    size_t size = snprintf(buffer, sizeof(buffer), format, args...) + 1;
+    if (size < sizeof(buffer))
+    {
+        return std::string(buffer);
+    }
+
+    std::unique_ptr<char[]> buf(new char[size]);
+    std::snprintf(buf.get(), size, format, args...);
+    return std::string(buf.get());
+}
 
 EMSCRIPTEN_BINDINGS(opentime)
 {
@@ -19,6 +39,24 @@ EMSCRIPTEN_BINDINGS(opentime)
         .function("is_invalid_time", &RationalTime::is_invalid_time)
         .property("value", &RationalTime::value)
         .property("rate", &RationalTime::rate)
+        .function("toString", ems::optional_override([](RationalTime& rt) {
+                      return string_printf(
+                          "RationalTime(value=%g, rate=%g)",
+                          rt.value(),
+                          rt.rate());
+                  }))
+        .function("valueOf", ems::optional_override([](RationalTime& rt) {
+                      // This is what RationalTime class does internally when comparing
+                      // rational times.
+                      return rt.value() / rt.rate();
+                  }))
+        .function(
+            "toPrimitive",
+            ems::optional_override([](RationalTime& rt, std::string hint) {
+                // This is what RationalTime class does internally when comparing
+                // rational times.
+                return rt.value() / rt.rate();
+            }))
         .function(
             "rescaled_to",
             ems::select_overload<RationalTime(double) const>(
@@ -75,14 +113,14 @@ EMSCRIPTEN_BINDINGS(opentime)
         .function(
             "from_timecode",
             ems::optional_override(
-                [](RationalTime& seld, std::string timecode, double rate) {
+                [](RationalTime& self, std::string timecode, double rate) {
                     // TODO: How to handle the error?
                     return RationalTime::from_timecode(timecode, rate);
                 }))
         .function(
             "from_time_string",
             ems::optional_override(
-                [](RationalTime& seld, std::string timecode, double rate) {
+                [](RationalTime& self, std::string timecode, double rate) {
                     // TODO: How to handle the error?
                     return RationalTime::from_time_string(timecode, rate);
                 }));
