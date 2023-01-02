@@ -1,0 +1,17 @@
+{
+  "name": "opentimelineio",
+  "version": "0.15.0",
+  "description": "Open Source API and interchange format for editorial timeline information.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Contributors to the OpenTimelineIO project <otio-discussion@lists.aswf.io>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "jest": "^29.3.1"
+  }
+}

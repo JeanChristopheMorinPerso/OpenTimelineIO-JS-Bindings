@@ -1,0 +1,75 @@
+set(OTIO_EMSDK_PATH "" CACHE PATH "Path to EMSDK (e.g. 'D:/Projects/emsdk').")
+# if (OTIO_EMSCRIPTEN_INSTALL)
+#     if (EXISTS "${OTIO_EMSDK_PATH}")
+#         set(EMSDK_PATH ${OTIO_EMSDK_PATH})
+#     elseif (EXISTS $ENV{EMSDK})
+#         set(EMSDK_PATH $ENV{EMSDK})
+#     endif()
+#     if (EMSDK_PATH)
+#         set(CMAKE_TOOLCHAIN_FILE "${EMSDK_PATH}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake")
+#     else()
+#         message("The EMSDK path was not supplied, disabling OTIO_EMSCRIPTEN_INSTALL")
+#         set(OTIO_EMSCRIPTEN_INSTALL OFF)
+#     endif()
+# endif()
+
+message(STATUS "CMAKE_TOOLCHAIN_FILE: ${CMAKE_TOOLCHAIN_FILE}")
+message(STATUS "EMSDK_PATH: ${EMSDK_PATH}")
+message(STATUS "EMSDK: $ENV{EMSDK}")
+
+# Linker flags
+set(JS_LINK_FLAGS "")
+if (EXTERNAL_LINK_FLAGS)
+    string(APPEND JS_LINK_FLAGS "${EXTERNAL_LINK_FLAGS} ")
+endif()
+
+string(APPEND JS_LINK_FLAGS " -I${CMAKE_SOURCE_DIR}/deps/OpenTimelineIO/src \
+    -sWASM=1 \
+    -sDISABLE_EXCEPTION_CATCHING=0 \
+    -sMODULARIZE=1 \
+    -sUSE_ES6_IMPORT_META=0 \
+    -sEXPORT_NAME='opentime' \
+    -sMEMORY_GROWTH_LINEAR_STEP=32MB \
+    -sALLOW_MEMORY_GROWTH=1 \
+    -sFORCE_FILESYSTEM=1 ")
+
+# Compiler flags
+set(JS_COMPILE_FLAGS "")
+if (EXTERNAL_COMPILE_FLAGS)
+    string(APPEND JS_COMPILE_FLAGS "${EXTERNAL_COMPILE_FLAGS} ")
+endif()
+
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+    string(APPEND JS_LINK_FLAGS "--bind ")
+else()
+    string(APPEND JS_LINK_FLAGS "-flto -Os --bind ")
+    string(APPEND JS_COMPILE_FLAGS "-flto -Os ")
+endif()
+
+message(STATUS "JS_LINK_FLAGS: ${JS_LINK_FLAGS}")
+message(STATUS "JS_COMPILE_FLAGS: ${JS_COMPILE_FLAGS}")
+
+set(OPENTIME_SRC ${CMAKE_CURRENT_SOURCE_DIR}/opentime)
+
+set(OPENTIME_DEPS ${OPENTIME_SRC}/bindings.cpp)
+
+add_executable(opentime-js ${OPENTIME_SRC}/lib.cpp
+    ${OPENTIME_DEPS})
+
+set_target_properties(opentime-js
+    PROPERTIES
+    OUTPUT_NAME opentime
+    COMPILE_FLAGS "${JS_COMPILE_FLAGS}"
+    LINK_FLAGS "${JS_LINK_FLAGS}"
+    SOVERSION "1.0")
+
+target_link_libraries(opentime-js
+    PUBLIC OTIO::opentime)
+
+target_include_directories(opentime-js PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src")
+
+install(TARGETS opentime-js DESTINATION .)
+
+install(FILES ${CMAKE_BINARY_DIR}/src/opentime.wasm DESTINATION .)
+# install(FILES ${CMAKE_INSTALL_PREFIX}/JavaScript/opentime/opentime.js DESTINATION JavaScript/opentime/ RENAME opentime-1.0.js)
