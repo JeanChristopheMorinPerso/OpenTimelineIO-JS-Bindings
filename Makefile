@@ -1,9 +1,10 @@
-.PHONY: init-emsdk build clean install
+.PHONY: setup build clean install
 
-init-emsdk:
+setup:
 	git clone https://github.com/emscripten-core/emsdk.git
 	cd emsdk && ./emsdk install latest
 	cd emsdk && ./emsdk activate latest
+	npm install
 
 build:
 	mkdir -p build
@@ -13,6 +14,7 @@ build:
 
 install:
 	cd build && make install
+	npx tsembind install/opentime.js > install/opentime.d.ts
 
 clean:
 	rm -rf build

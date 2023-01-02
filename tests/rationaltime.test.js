@@ -1,6 +1,9 @@
 const factory = require('../install/opentime');
 const { expect, test, beforeAll } = require('@jest/globals');
 
+/**
+ * @type {factory.CustomEmbindModule}
+ */
 let lib;
 
 beforeAll(async () => {
@@ -9,25 +12,25 @@ beforeAll(async () => {
 
 test('create', () => {
     let t_val = 30.2;
-    t = new lib.RationalTime(t_val);
+    const t = new lib.RationalTime(t_val);
     expect(t).toBeDefined();
     expect(t.value).toEqual(t_val);
 
     t_val = -30.2;
-    t = new lib.RationalTime(t_val);
-    expect(t).toBeDefined();
-    expect(t.value).toEqual(t_val);
+    const t2 = new lib.RationalTime(t_val);
+    expect(t2).toBeDefined();
+    expect(t2.value).toEqual(t_val);
 
     t_val = -30.2;
-    t = new lib.RationalTime(t_val, 200.0);
-    expect(t).toBeDefined();
-    expect(t.value).toEqual(t_val);
+    const t3 = new lib.RationalTime(t_val, 200.0);
+    expect(t3).toBeDefined();
+    expect(t3.value).toEqual(t_val);
     // TODO: Why is the float lost?
-    expect(t.rate).toEqual(200);
+    expect(t3.rate).toEqual(200);
 
-    t = new lib.RationalTime()
-    expect(t.value).toEqual(0)
-    expect(t.rate).toEqual(1.0)
+    const t4 = new lib.RationalTime()
+    expect(t4.value).toEqual(0)
+    expect(t4.rate).toEqual(1.0)
 });
 
 test('string', () => {
