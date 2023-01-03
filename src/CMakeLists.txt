@@ -28,7 +28,7 @@ string(APPEND JS_LINK_FLAGS " -I${CMAKE_SOURCE_DIR}/deps/OpenTimelineIO/src \
     -sDISABLE_EXCEPTION_CATCHING=0 \
     -sMODULARIZE=1 \
     -sUSE_ES6_IMPORT_META=0 \
-    -sEXPORT_NAME='opentime' \
+    -sEXPORT_NAME='OpenTimelineIO' \
     -sMEMORY_GROWTH_LINEAR_STEP=32MB \
     -sALLOW_MEMORY_GROWTH=1 \
     -sFORCE_FILESYSTEM=1 ")
@@ -50,8 +50,8 @@ endif()
 message(STATUS "JS_LINK_FLAGS: ${JS_LINK_FLAGS}")
 message(STATUS "JS_COMPILE_FLAGS: ${JS_COMPILE_FLAGS}")
 
+# Opentime
 set(OPENTIME_SRC ${CMAKE_CURRENT_SOURCE_DIR}/opentime)
-
 set(OPENTIME_DEPS ${OPENTIME_SRC}/bindings.cpp)
 
 add_executable(opentime-js ${OPENTIME_SRC}/lib.cpp
@@ -69,7 +69,31 @@ target_link_libraries(opentime-js
 
 target_include_directories(opentime-js PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src")
 
-install(TARGETS opentime-js DESTINATION .)
+# Opentimelineio
+set(OPENTIMELINEIO_SRC ${CMAKE_CURRENT_SOURCE_DIR}/opentimelineio)
+set(OPENTIMEINEIO_DEPS ${OPENTIMELINEIO_SRC}/bindings.cpp)
 
+add_executable(opentimelineio-js ${OPENTIMELINEIO_SRC}/lib.cpp
+    ${OPENTIMEINEIO_DEPS})
+
+set_target_properties(opentimelineio-js
+    PROPERTIES
+    OUTPUT_NAME opentimelineio
+    COMPILE_FLAGS "${JS_COMPILE_FLAGS}"
+    LINK_FLAGS "${JS_LINK_FLAGS}"
+    SOVERSION "1.0")
+
+target_link_libraries(opentimelineio-js
+    PUBLIC OTIO::opentimelineio)
+
+target_include_directories(opentimelineio-js
+    PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src"
+    PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src/deps"
+    PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src/deps/optional-lite/include"
+)
+
+# Install
+install(TARGETS opentime-js DESTINATION .)
+install(TARGETS opentimelineio-js DESTINATION .)
 install(FILES ${CMAKE_BINARY_DIR}/src/opentime.wasm DESTINATION .)
-# install(FILES ${CMAKE_INSTALL_PREFIX}/JavaScript/opentime/opentime.js DESTINATION JavaScript/opentime/ RENAME opentime-1.0.js)
+install(FILES ${CMAKE_BINARY_DIR}/src/opentimelineio.wasm DESTINATION .)
