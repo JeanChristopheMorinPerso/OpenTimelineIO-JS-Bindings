@@ -154,5 +154,7 @@ getExceptionMessage(int exceptionPtr)
 
 EMSCRIPTEN_BINDINGS(exceptions)
 {
+    // TODO: This is not needed if we use -fwasm-exceptions compiler flag.
+    // But it's not yet supported in all environments. See https://webassembly.org/roadmap/.
     ems::function("getExceptionMessage", &jsexceptions::getExceptionMessage);
 }

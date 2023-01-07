@@ -25,13 +25,23 @@ endif()
 
 string(APPEND JS_LINK_FLAGS " -I${CMAKE_SOURCE_DIR}/deps/OpenTimelineIO/src \
     -sWASM=1 \
-    -sDISABLE_EXCEPTION_CATCHING=0 \
     -sMODULARIZE=1 \
     -sUSE_ES6_IMPORT_META=0 \
     -sEXPORT_NAME='OpenTimelineIO' \
     -sMEMORY_GROWTH_LINEAR_STEP=32MB \
     -sALLOW_MEMORY_GROWTH=1 \
-    -sFORCE_FILESYSTEM=1 ")
+    -sFORCE_FILESYSTEM=1 "
+)
+
+# Support exceptions
+# string(APPEND JS_LINK_FLAGS "-sNO_DISABLE_EXCEPTION_CATCHING=0")
+# TODO: This is not yet supported in all environments. See https://webassembly.org/roadmap/.
+# We might need to use sNO_DISABLE_EXCEPTION_CATCHING instead... Which would be sad.
+string(APPEND JS_LINK_FLAGS "-fwasm-exceptions ")
+
+# ASSERTIONS will make sure we have information attached to the WebAssembly.Exception objects.
+# For example tags (Exception types), exception message and stack trace.
+string(APPEND JS_LINK_FLAGS "-sASSERTIONS ")
 
 # Compiler flags
 set(JS_COMPILE_FLAGS "")
@@ -41,7 +51,7 @@ endif()
 
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 if (CMAKE_BUILD_TYPE MATCHES Debug)
-    string(APPEND JS_LINK_FLAGS "--bind ")
+    string(APPEND JS_LINK_FLAGS "--bind -g")
 else()
     string(APPEND JS_LINK_FLAGS "-flto -Os --bind ")
     string(APPEND JS_COMPILE_FLAGS "-flto -Os ")

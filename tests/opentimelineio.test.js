@@ -15,8 +15,8 @@ function expectError(expectedMessage, callback) {
         callback();
         throw new Error('Expected function to throw!');
     } catch (err) {
-        const message = lib.getExceptionMessage(err);
-        expect(message).toEqual(expectedMessage)
+        expect(err).toBeInstanceOf(WebAssembly.Exception)
+        expect(err.message[1]).toEqual(expectedMessage)
     }
 }
 
