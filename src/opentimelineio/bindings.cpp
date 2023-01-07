@@ -16,6 +16,13 @@ raw_destructor<SerializableObject>(SerializableObject* ptr)
 {
     ptr->possibly_delete();
 }
+
+template <>
+void
+raw_destructor<UnknownSchema>(UnknownSchema* ptr)
+{
+    ptr->possibly_delete();
+}
 }} // namespace emscripten::internal
 
 EMSCRIPTEN_BINDINGS(opentimelineio)
@@ -66,4 +73,11 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         .function("schema_name", &SerializableObject::schema_name)
         .function("schema_version", &SerializableObject::schema_version)
         .property("is_unknown_schema", &SerializableObject::is_unknown_schema);
+
+    ems::class_<UnknownSchema, ems::base<SerializableObject>>("UnknownSchema")
+        .constructor<std::string, int>()
+        .property("original_schema_name", &UnknownSchema::original_schema_name)
+        .property(
+            "original_schema_version",
+            &UnknownSchema::original_schema_version);
 }
