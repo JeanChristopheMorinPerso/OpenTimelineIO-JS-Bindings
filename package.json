@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "jest tests/*"
+    "test": "jest"
   },
   "author": "Contributors to the OpenTimelineIO project <otio-discussion@lists.aswf.io>",
   "license": "Apache-2.0",
@@ -15,5 +15,10 @@
     "@jest/globals": "^29.3.1",
     "jest": "^29.3.1",
     "tsembind": "^1.0.2"
+  },
+  "jest": {
+    "testMatch": [
+      "<rootDir>/tests/**"
+    ]
   }
 }
