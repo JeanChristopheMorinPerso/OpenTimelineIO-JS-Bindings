@@ -71,7 +71,11 @@ target_include_directories(opentime-js PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenT
 
 # Opentimelineio
 set(OPENTIMELINEIO_SRC ${CMAKE_CURRENT_SOURCE_DIR}/opentimelineio)
-set(OPENTIMEINEIO_DEPS ${OPENTIMELINEIO_SRC}/bindings.cpp)
+set(OPENTIMEINEIO_DEPS
+    ${OPENTIMELINEIO_SRC}/bindings.cpp
+    ${OPENTIMELINEIO_SRC}/errorStatusHandler.cpp
+    ${OPENTIMELINEIO_SRC}/anyVector.cpp
+)
 
 add_executable(opentimelineio-js ${OPENTIMELINEIO_SRC}/lib.cpp
     ${OPENTIMEINEIO_DEPS})
