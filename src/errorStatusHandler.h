@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "opentimelineio/errorStatus.h"
+#include <opentimelineio/errorStatus.h>
 
 using namespace opentimelineio::OPENTIMELINEIO_VERSION;
 

@@ -25,11 +25,11 @@ test('asd', () => {
     av.push_back("a value set from JS!")
     expect(av.get(0)).toEqual("a value set from JS!")
 
-    expectError("failed to open file for reading", () => {
+    expectError("No such file or directory: non existent file", () => {
         lib.SerializableObject.from_json_file("non existent file")
     })
 
-    expectError("JSON parse error", () => {
+    expectError("JSON parse error while reading: JSON parse error on input string: Invalid value. (line 1, column 0)", () => {
         lib.SerializableObject.from_json_string("invalid string")
     })
 })

@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
-#include "errorStatusHandler.h"
 
-#include "opentimelineio/serializableObject.h"
 #include <emscripten/bind.h>
+#include <emscripten/val.h>
+#include <opentimelineio/anyDictionary.h>
+#include <opentimelineio/serializableCollection.h>
+#include <opentimelineio/serializableObject.h>
+#include <opentimelineio/unknownSchema.h>
+
+#include "errorStatusHandler.h"
 
 namespace ems = emscripten;
 using namespace opentimelineio::OPENTIMELINEIO_VERSION;
@@ -23,14 +28,39 @@ raw_destructor<UnknownSchema>(UnknownSchema* ptr)
 {
     ptr->possibly_delete();
 }
+
+template <>
+void
+raw_destructor<SerializableObjectWithMetadata>(
+    SerializableObjectWithMetadata* ptr)
+{
+    ptr->possibly_delete();
+}
 }} // namespace emscripten::internal
+
+SerializableObjectWithMetadata*
+constructSOWithMetadata0()
+{
+    return new SerializableObjectWithMetadata();
+}
+
+SerializableObjectWithMetadata*
+constructSOWithMetadata1(std::string name)
+{
+    return new SerializableObjectWithMetadata(name);
+}
+
+SerializableObjectWithMetadata*
+constructSOWithMetadata2(std::string name, ems::val metadata)
+{
+    return new SerializableObjectWithMetadata(name, AnyDictionary());
+}
 
 EMSCRIPTEN_BINDINGS(opentimelineio)
 {
     ems::class_<SerializableObject>("SerializableObject")
         .constructor<>()
         .function("is_equivalent_to", &SerializableObject::is_equivalent_to)
-        // TODO: Handle error
         .function(
             "clone",
             ems::optional_override([](SerializableObject* so) {
@@ -80,4 +110,10 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         .property(
             "original_schema_version",
             &UnknownSchema::original_schema_version);
+
+    ems::class_<SerializableObjectWithMetadata, ems::base<SerializableObject>>(
+        "SerializableObjectWithMetadata")
+        .constructor(&constructSOWithMetadata0, ems::allow_raw_pointers())
+        .constructor(&constructSOWithMetadata1, ems::allow_raw_pointers())
+        .constructor(&constructSOWithMetadata2, ems::allow_raw_pointers());
 }

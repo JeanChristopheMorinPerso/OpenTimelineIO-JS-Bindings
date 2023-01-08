@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
-
-#include "functional"
-#include "opentime/rationalTime.h"
-#include "opentime/timeRange.h"
-#include "opentime/timeTransform.h"
 #include <cstdio>
-#include <emscripten/bind.h>
 #include <memory>
 #include <string>
+
+#include <emscripten/bind.h>
+#include <opentime/errorStatus.h>
+#include <opentime/rationalTime.h>
+#include <opentime/timeRange.h>
+#include <opentime/timeTransform.h>
+
+#include <exceptions.h>
 
 namespace ems = emscripten;
 using namespace opentime;
@@ -38,8 +40,31 @@ opentime_js_string(RationalTime rt)
         rt.rate());
 }
 
+namespace {
+
+struct ErrorStatusConverter
+{
+    operator ErrorStatus*() { return &error_status; }
+
+    ~ErrorStatusConverter() noexcept(false)
+    {
+        if (is_error(error_status))
+        {
+            throw ValueError(error_status.details);
+        }
+    }
+
+    ErrorStatus error_status;
+};
+} // namespace
+
 EMSCRIPTEN_BINDINGS(opentime)
 {
+
+    ems::enum_<IsDropFrameRate>("IsDropFrameRate")
+        .value("ForceNo", IsDropFrameRate::ForceNo)
+        .value("ForceYes", IsDropFrameRate::ForceYes)
+        .value("InferFromRate", IsDropFrameRate::InferFromRate);
 
     ems::class_<RationalTime>("RationalTime")
         .constructor()
@@ -108,26 +133,44 @@ EMSCRIPTEN_BINDINGS(opentime)
             "to_frames",
             ems::select_overload<int(double) const>(&RationalTime::to_frames))
         .function("to_seconds", &RationalTime::to_seconds)
-        // TODO: Optional parameters
-        // TODO: How to handle the error argument?
-        // .function(
-        //     "to_timecode",
-        //     ems::select_overload<std::string(void)>(&RationalTime::to_timecode))
+        .function("to_timecode", ems::optional_override([](RationalTime& rt) {
+                      return rt.to_timecode(
+                          rt.rate(),
+                          IsDropFrameRate::InferFromRate,
+                          ErrorStatusConverter());
+                  }))
+        .function(
+            "to_timecode",
+            ems::optional_override([](RationalTime& rt, double rate) {
+                return rt.to_timecode(
+                    rt.rate(),
+                    IsDropFrameRate::InferFromRate,
+                    ErrorStatusConverter());
+            }))
+        .function(
+            "to_timecode",
+            ems::optional_override([](RationalTime&   rt,
+                                      double          rate,
+                                      IsDropFrameRate drop_frame) {
+                return rt.to_timecode(rate, drop_frame, ErrorStatusConverter());
+            }))
         .function("to_time_string", &RationalTime::to_time_string)
-        .function(
+        .class_function(
             "from_timecode",
-            ems::optional_override(
-                [](RationalTime& self, std::string timecode, double rate) {
-                    // TODO: How to handle the error?
-                    return RationalTime::from_timecode(timecode, rate);
-                }))
-        .function(
+            ems::optional_override([](std::string timecode, double rate) {
+                return RationalTime::from_timecode(
+                    timecode,
+                    rate,
+                    ErrorStatusConverter());
+            }))
+        .class_function(
             "from_time_string",
-            ems::optional_override(
-                [](RationalTime& self, std::string timecode, double rate) {
-                    // TODO: How to handle the error?
-                    return RationalTime::from_time_string(timecode, rate);
-                }));
+            ems::optional_override([](std::string timecode, double rate) {
+                return RationalTime::from_time_string(
+                    timecode,
+                    rate,
+                    ErrorStatusConverter());
+            }));
 
     ems::class_<TimeRange>("TimeRange")
         // TODO: Match Python constructor logic?

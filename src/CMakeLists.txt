@@ -62,7 +62,10 @@ message(STATUS "JS_COMPILE_FLAGS: ${JS_COMPILE_FLAGS}")
 
 # Opentime
 set(OPENTIME_SRC ${CMAKE_CURRENT_SOURCE_DIR}/opentime)
-set(OPENTIME_DEPS ${OPENTIME_SRC}/bindings.cpp)
+set(OPENTIME_DEPS
+    ${OPENTIME_SRC}/bindings.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/errorStatusHandler.cpp
+)
 
 add_executable(opentime-js ${OPENTIME_SRC}/lib.cpp
     ${OPENTIME_DEPS})
@@ -77,14 +80,17 @@ set_target_properties(opentime-js
 target_link_libraries(opentime-js
     PUBLIC OTIO::opentime)
 
-target_include_directories(opentime-js PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src")
+target_include_directories(opentime-js
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src"
+)
 
 # Opentimelineio
 set(OPENTIMELINEIO_SRC ${CMAKE_CURRENT_SOURCE_DIR}/opentimelineio)
 set(OPENTIMEINEIO_DEPS
     ${OPENTIMELINEIO_SRC}/bindings.cpp
-    ${OPENTIMELINEIO_SRC}/errorStatusHandler.cpp
     ${OPENTIMELINEIO_SRC}/anyVector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/errorStatusHandler.cpp
 )
 
 add_executable(opentimelineio-js ${OPENTIMELINEIO_SRC}/lib.cpp
@@ -101,6 +107,7 @@ target_link_libraries(opentimelineio-js
     PUBLIC OTIO::opentimelineio)
 
 target_include_directories(opentimelineio-js
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src"
     PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src/deps"
     PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src/deps/optional-lite/include"

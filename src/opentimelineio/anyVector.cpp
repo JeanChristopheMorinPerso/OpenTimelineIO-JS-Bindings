@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
-#include "errorStatusHandler.h"
-
-#include "opentimelineio/any.h"
-#include "opentimelineio/anyVector.h"
-#include "opentimelineio/safely_typed_any.h"
 #include <emscripten/bind.h>
+#include <opentimelineio/any.h>
+#include <opentimelineio/anyVector.h>
+#include <opentimelineio/safely_typed_any.h>
 
 namespace ems = emscripten;
 using namespace opentimelineio::OPENTIMELINEIO_VERSION;
