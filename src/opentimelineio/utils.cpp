@@ -6,6 +6,8 @@
 #include "opentimelineio/safely_typed_any.h"
 #include <emscripten/val.h>
 
+#include "utils.h"
+
 namespace ems = emscripten;
 using namespace opentimelineio::OPENTIMELINEIO_VERSION;
 
@@ -130,29 +132,24 @@ js_to_any(ems::val const& item)
 
     if (item.isFalse() || item.isTrue())
     {
-        return any(item.as<bool>());
+        return any(js_to_cpp<bool>(item));
     }
 
     if (item.isNumber())
     {
         // TODO: How to handle other types of ints? Javascript only has Number...
         // Also, handle floats, double (?).
-        return any(item.as<int32_t>());
+        return any(js_to_cpp<int32_t>(item));
     }
 
     if (item.isString())
     {
-        return any(item.as<std::string>());
+        return any(js_to_cpp<std::string>(item));
     }
 
     if (item.isArray())
     {
-        AnyVector av = AnyVector();
-        for (auto& it: ems::vecFromJSArray<ems::val>(item))
-        {
-            av.push_back(js_to_any(it));
-        }
-        return av;
+        return js_array_to_cpp(item);
     }
 
     if (item.typeOf().as<std::string>() == "object")
@@ -162,3 +159,25 @@ js_to_any(ems::val const& item)
     }
     // TODO: Handle all other types.
 }
+
+template <typename T>
+T
+js_to_cpp(ems::val const& item)
+{
+    return item.as<T>();
+};
+
+AnyVector
+js_array_to_cpp(ems::val const& item)
+{
+    AnyVector av = AnyVector();
+    for (auto& it: ems::vecFromJSArray<ems::val>(item))
+    {
+        av.push_back(js_to_any(it));
+    }
+    return av;
+}
+
+AnyDictionary
+js_map_to_cpp(ems::val const& item)
+{}

@@ -95,9 +95,11 @@ add_custom_target(opentime-ts
 # Opentimelineio
 set(OPENTIMELINEIO_SRC ${CMAKE_CURRENT_SOURCE_DIR}/opentimelineio)
 set(OPENTIMEINEIO_DEPS
-    ${OPENTIMELINEIO_SRC}/bindings.cpp
+    ${OPENTIMELINEIO_SRC}/anyDictionary.cpp
     ${OPENTIMELINEIO_SRC}/anyVector.cpp
+    ${OPENTIMELINEIO_SRC}/bindings.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/errorStatusHandler.cpp
+    ${OPENTIMELINEIO_SRC}/utils.cpp
 )
 
 add_executable(opentimelineio-js ${OPENTIMELINEIO_SRC}/lib.cpp
@@ -111,7 +113,7 @@ set_target_properties(opentimelineio-js
     SOVERSION "1.0")
 
 target_link_libraries(opentimelineio-js
-    PUBLIC OTIO::opentimelineio)
+    PUBLIC OTIO::opentime OTIO::opentimelineio)
 
 target_include_directories(opentimelineio-js
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
