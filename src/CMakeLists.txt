@@ -85,6 +85,13 @@ target_include_directories(opentime-js
     PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src"
 )
 
+add_custom_target(opentime-ts
+    ALL
+    DEPENDS opentime-js
+    COMMAND npx tsembind $<TARGET_FILE:opentime-js> > $<TARGET_FILE_DIR:opentime-js>/$<TARGET_FILE_BASE_NAME:opentime-js>.d.ts
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+
 # Opentimelineio
 set(OPENTIMELINEIO_SRC ${CMAKE_CURRENT_SOURCE_DIR}/opentimelineio)
 set(OPENTIMEINEIO_DEPS
@@ -113,8 +120,17 @@ target_include_directories(opentimelineio-js
     PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src/deps/optional-lite/include"
 )
 
+add_custom_target(opentimelineio-ts
+    ALL
+    DEPENDS opentimelineio-js
+    COMMAND npx tsembind $<TARGET_FILE:opentimelineio-js> > $<TARGET_FILE_DIR:opentimelineio-js>/$<TARGET_FILE_BASE_NAME:opentimelineio-js>.d.ts
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+
 # Install
-install(TARGETS opentime-js DESTINATION .)
-install(TARGETS opentimelineio-js DESTINATION .)
-install(FILES ${CMAKE_BINARY_DIR}/src/opentime.wasm DESTINATION .)
-install(FILES ${CMAKE_BINARY_DIR}/src/opentimelineio.wasm DESTINATION .)
+install(TARGETS opentime-js DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES $<TARGET_FILE_DIR:opentime-js>/$<TARGET_FILE_BASE_NAME:opentime-js>.d.ts DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(TARGETS opentimelineio-js DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES $<TARGET_FILE_DIR:opentimelineio-js>/$<TARGET_FILE_BASE_NAME:opentimelineio-js>.d.ts DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES ${CMAKE_BINARY_DIR}/src/opentime.wasm DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES ${CMAKE_BINARY_DIR}/src/opentimelineio.wasm DESTINATION ${CMAKE_INSTALL_PREFIX})

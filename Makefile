@@ -19,8 +19,6 @@ build:
 
 install:
 	cd build && make install
-	npx tsembind install/opentime.js > install/opentime.d.ts
-	npx tsembind install/opentimelineio.js > install/opentimelineio.d.ts
 
 clean:
 	rm -rf build
