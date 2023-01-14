@@ -10,7 +10,7 @@
 #include <opentime/timeRange.h>
 #include <opentime/timeTransform.h>
 
-#include <exceptions.h>
+#include "exceptions.h"
 
 namespace ems = emscripten;
 using namespace opentime;
@@ -20,7 +20,7 @@ std::string
 string_printf(char const* format, Args... args)
 {
     char   buffer[4096];
-    size_t size = snprintf(buffer, sizeof(buffer), format, args...) + 1;
+    size_t size = std::snprintf(buffer, sizeof(buffer), format, args...) + 1;
     if (size < sizeof(buffer))
     {
         return std::string(buffer);

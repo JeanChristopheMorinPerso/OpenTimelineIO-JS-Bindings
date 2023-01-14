@@ -60,3 +60,14 @@ test('SOWithMetadata', () => {
     // console.log('value of asd2:', so.metadata.get('asd2'))
     so.delete()
 })
+
+test('SerializableCollection', () => {
+    const so1 = new lib.SerializableObject();
+    const so2 = new lib.SerializableObject();
+    new lib.SerializableCollection();
+    new lib.SerializableCollection("myname", [so1, so2]);
+})
+
+test("Imath", () => {
+    console.log(lib.V2d.baseTypeLowest)
+})

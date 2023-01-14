@@ -8,6 +8,8 @@
 #include <iostream>
 #include <opentimelineio/any.h>
 #include <opentimelineio/anyDictionary.h>
+#include <string>
+#include <utility>
 
 #include "utils.h"
 
