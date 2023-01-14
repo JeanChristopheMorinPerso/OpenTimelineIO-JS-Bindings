@@ -3,7 +3,9 @@
 
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
+#include <opentime/timeRange.h>
 #include <opentimelineio/anyDictionary.h>
+#include <opentimelineio/marker.h>
 #include <opentimelineio/serializableCollection.h>
 #include <opentimelineio/serializableObject.h>
 #include <opentimelineio/unknownSchema.h>
@@ -15,48 +17,9 @@
 namespace ems = emscripten;
 using namespace opentimelineio::OPENTIMELINEIO_VERSION;
 
-namespace emscripten { namespace internal {
-// https://github.com/emscripten-core/emscripten/issues/5587#issuecomment-429085470
-template <>
-void
-raw_destructor<SerializableObject>(SerializableObject* ptr)
-{
-    ptr->possibly_delete();
-}
-
-template <>
-void
-raw_destructor<UnknownSchema>(UnknownSchema* ptr)
-{
-    ptr->possibly_delete();
-}
-
-template <>
-void
-raw_destructor<SerializableObjectWithMetadata>(
-    SerializableObjectWithMetadata* ptr)
-{
-    ptr->possibly_delete();
-}
-}} // namespace emscripten::internal
-
-SerializableObjectWithMetadata*
-constructSOWithMetadata0()
-{
-    return new SerializableObjectWithMetadata();
-}
-
-SerializableObjectWithMetadata*
-constructSOWithMetadata1(std::string name)
-{
-    return new SerializableObjectWithMetadata(name);
-}
-
-SerializableObjectWithMetadata*
-constructSOWithMetadata2(std::string name, ems::val metadata)
-{
-    return new SerializableObjectWithMetadata(name, js_map_to_cpp(metadata));
-}
+REGISTER_DESTRUCTOR(SerializableObject);
+REGISTER_DESTRUCTOR(UnknownSchema);
+REGISTER_DESTRUCTOR(SerializableObjectWithMetadata);
 
 EMSCRIPTEN_BINDINGS(opentimelineio)
 {

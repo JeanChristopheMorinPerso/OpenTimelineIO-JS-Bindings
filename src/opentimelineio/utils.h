@@ -25,4 +25,19 @@ AnyVector js_array_to_cpp(ems::val const& item);
 
 AnyDictionary js_map_to_cpp(ems::val const& item);
 
+/**
+ * Macro to register the destructor of TYPE. Emscripten needs to have public
+ * destructors which are made available from JS, but OTIO's destructors are private.
+ * @param TYPE Type name without namespace.
+*/
+#define REGISTER_DESTRUCTOR(TYPE)                                              \
+    namespace emscripten { namespace internal {                                \
+    template <>                                                                \
+    void raw_destructor<TYPE>(TYPE * ptr)                                      \
+    {                                                                          \
+        ptr->possibly_delete();                                                \
+    }                                                                          \
+    }                                                                          \
+    } // namespace emscripten::internal
+
 #endif // JS_UTILS_H
