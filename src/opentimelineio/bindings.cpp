@@ -20,6 +20,7 @@ using namespace opentimelineio::OPENTIMELINEIO_VERSION;
 REGISTER_DESTRUCTOR(SerializableObject);
 REGISTER_DESTRUCTOR(UnknownSchema);
 REGISTER_DESTRUCTOR(SerializableObjectWithMetadata);
+REGISTER_DESTRUCTOR(Marker);
 
 EMSCRIPTEN_BINDINGS(opentimelineio)
 {
@@ -96,4 +97,27 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             // Also, how will we override metadata? For example so.metadata?
             ems::select_overload<AnyDictionary() const noexcept>(
                 &SerializableObjectWithMetadata::metadata));
+
+    ems::class_<Marker, ems::base<SerializableObjectWithMetadata>>("Marker")
+        .constructor(ems::optional_override([](std::string        name,
+                                               TimeRange          marked_range,
+                                               std::string const& color,
+                                               ems::val           metadata) {
+            return new Marker(
+                name,
+                marked_range,
+                color,
+                js_map_to_cpp(metadata));
+        }))
+        .property("color", &Marker::color, &Marker::set_color)
+        .property(
+            "marked_range",
+            &Marker::marked_range,
+            &Marker::set_marked_range);
+
+    // TODO: SHould this be an enum or maybe something else?
+    ems::class_<Marker::Color>("MarkerColor");
+
+    ems::register_vector<SerializableObject>("SerializableObjectVector");
+
 }
