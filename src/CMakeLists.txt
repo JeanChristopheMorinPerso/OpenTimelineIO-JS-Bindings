@@ -99,6 +99,7 @@ set(OPENTIMEINEIO_DEPS
     ${OPENTIMELINEIO_SRC}/bindings.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/errorStatusHandler.cpp
     ${OPENTIMELINEIO_SRC}/utils.cpp
+    ${OPENTIMELINEIO_SRC}/imath.cpp
 )
 
 add_executable(opentimelineio-js ${OPENTIMELINEIO_SRC}/lib.cpp
