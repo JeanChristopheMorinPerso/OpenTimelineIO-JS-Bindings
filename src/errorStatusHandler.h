@@ -5,16 +5,16 @@
 
 #include <opentimelineio/errorStatus.h>
 
-using namespace opentimelineio::OPENTIMELINEIO_VERSION;
+namespace otio = opentimelineio::OPENTIMELINEIO_VERSION;
 
 struct ErrorStatusHandler
 {
-    operator ErrorStatus*() { return &error_status; }
+    operator otio::ErrorStatus*() { return &error_status; }
 
     ~ErrorStatusHandler() noexcept(false);
 
     std::string details();
     std::string full_details();
 
-    ErrorStatus error_status;
+    otio::ErrorStatus error_status;
 };

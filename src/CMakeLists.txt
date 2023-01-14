@@ -95,7 +95,6 @@ add_custom_target(opentime-ts
 # Opentimelineio
 set(OPENTIMELINEIO_SRC ${CMAKE_CURRENT_SOURCE_DIR}/opentimelineio)
 set(OPENTIMEINEIO_DEPS
-    ${OPENTIMELINEIO_SRC}/anyDictionary.cpp
     ${OPENTIMELINEIO_SRC}/anyVector.cpp
     ${OPENTIMELINEIO_SRC}/bindings.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/errorStatusHandler.cpp
