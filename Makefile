@@ -18,7 +18,7 @@ build:
 	cd build && cmake --build . -j 16
 
 install:
-	cd build && make install
+	cd build && cmake --install .
 
 clean:
 	rm -rf build
