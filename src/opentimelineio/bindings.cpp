@@ -9,6 +9,8 @@
 #include <opentimelineio/unknownSchema.h>
 
 #include "errorStatusHandler.h"
+#include "js_anyDictionary.h"
+#include "utils.h"
 
 namespace ems = emscripten;
 using namespace opentimelineio::OPENTIMELINEIO_VERSION;
@@ -53,7 +55,7 @@ constructSOWithMetadata1(std::string name)
 SerializableObjectWithMetadata*
 constructSOWithMetadata2(std::string name, ems::val metadata)
 {
-    return new SerializableObjectWithMetadata(name, AnyDictionary());
+    return new SerializableObjectWithMetadata(name, js_map_to_cpp(metadata));
 }
 
 EMSCRIPTEN_BINDINGS(opentimelineio)
@@ -113,7 +115,22 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
 
     ems::class_<SerializableObjectWithMetadata, ems::base<SerializableObject>>(
         "SerializableObjectWithMetadata")
-        .constructor(&constructSOWithMetadata0, ems::allow_raw_pointers())
-        .constructor(&constructSOWithMetadata1, ems::allow_raw_pointers())
-        .constructor(&constructSOWithMetadata2, ems::allow_raw_pointers());
+        .constructor<>()
+        .constructor<std::string>()
+        .constructor(
+            ems::optional_override([](std::string name, ems::val metadata) {
+                AnyDictionary d = js_map_to_cpp(metadata);
+                return new SerializableObjectWithMetadata(name, d);
+            }))
+        .property(
+            "name",
+            &SerializableObjectWithMetadata::name,
+            &SerializableObjectWithMetadata::set_name)
+        .property(
+            "metadata",
+            // TODO: Should we instead return the reference? AFAIK we can't
+            // to ems::select_overload<AnyDictionary&() noexcept>
+            // Also, how will we override metadata? For example so.metadata?
+            ems::select_overload<AnyDictionary() const noexcept>(
+                &SerializableObjectWithMetadata::metadata));
 }

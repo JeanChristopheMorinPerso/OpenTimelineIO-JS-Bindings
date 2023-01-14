@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
+#include "opentime/rationalTime.h"
+#include "opentime/timeRange.h"
+#include "opentime/timeTransform.h"
 #include "opentimelineio/any.h"
 #include "opentimelineio/anyVector.h"
 #include "opentimelineio/optional.h"
 #include "opentimelineio/safely_typed_any.h"
+#include "opentimelineio/stringUtils.h"
+#include <emscripten.h>
 #include <emscripten/val.h>
 
+#include "exceptions.h"
 #include "utils.h"
 
 namespace ems = emscripten;
@@ -99,27 +105,55 @@ ems::val
 any_to_js(any const& a, bool top_level)
 {
     std::type_info const& tInfo = a.type();
-    auto                  e     = _js_cast_dispatch_table.find(&tInfo);
 
-    if (e == _js_cast_dispatch_table.end())
+    // TODO: Figure out why the table raises a "memory access out of bounds" error.
+    // Wild guess: it has to de defined in a header like we had to do for AnyDictionary?
+    // auto                  e     = _js_cast_dispatch_table.find(&tInfo);
+
+    if (tInfo == typeid(void))
     {
-        auto backup_e = _js_cast_dispatch_table_by_name.find(tInfo.name());
-        if (backup_e != _js_cast_dispatch_table_by_name.end())
-        {
-            _js_cast_dispatch_table[&tInfo] = backup_e->second;
-            e = _js_cast_dispatch_table.find(&tInfo);
-        }
+        return ems::val::null();
+    }
+    else if (tInfo == typeid(bool))
+    {
+        return ems::val(safely_cast_bool_any(a));
+    }
+    else if (tInfo == typeid(int))
+    {
+        return ems::val(safely_cast_int_any(a));
+    }
+    else if (tInfo == typeid(int64_t))
+    {
+        return ems::val(safely_cast_int64_any(a));
+    }
+    else if (tInfo == typeid(int64_t))
+    {
+        return ems::val(safely_cast_uint64_any(a));
+    }
+    else if (tInfo == typeid(double))
+    {
+        return ems::val(safely_cast_double_any(a));
+    }
+    else if (tInfo == typeid(std::string))
+    {
+        return ems::val(safely_cast_string_any(a));
+    }
+    else if (tInfo == typeid(RationalTime))
+    {
+        return ems::val(safely_cast_rational_time_any(a));
+    }
+    else if (tInfo == typeid(TimeRange))
+    {
+        return ems::val(safely_cast_time_range_any(a));
+    }
+    else if (tInfo == typeid(TimeTransform))
+    {
+        return ems::val(safely_cast_time_transform_any(a));
     }
 
-    if (e == _js_cast_dispatch_table.end())
-    {
-        // throw py::value_error(string_printf(
-        //     "Unable to cast any of type %s to python object",
-        //     type_name_for_error_message(tInfo).c_str()));
-        throw "asd";
-    }
-
-    return e->second(a, top_level);
+    throw ValueError(string_printf(
+        "Unable to cast any of type '%s' to JS object",
+        type_name_for_error_message(tInfo).c_str()));
 }
 
 any
@@ -149,15 +183,16 @@ js_to_any(ems::val const& item)
 
     if (item.isArray())
     {
-        return js_array_to_cpp(item);
+        return any(js_array_to_cpp(item));
     }
 
     if (item.typeOf().as<std::string>() == "object")
     {
-        AnyDictionary d = AnyDictionary();
-        // TODO: how to handle objects?
+        return any(js_map_to_cpp(item));
     }
-    // TODO: Handle all other types.
+
+    throw TypeError(
+        "Unsupported value type: " + item.typeof().as<std::string>());
 }
 
 template <typename T>
@@ -179,5 +214,25 @@ js_array_to_cpp(ems::val const& item)
 }
 
 AnyDictionary
-js_map_to_cpp(ems::val const& item)
-{}
+js_map_to_cpp(ems::val const& m)
+{
+    ems::val keys   = ems::val::global("Object").call<ems::val>("entries", m);
+    size_t   length = keys["length"].as<size_t>();
+
+    AnyDictionary d = AnyDictionary();
+
+    for (size_t i = 0; i < length; ++i)
+    {
+        if (!keys[i][0].isString())
+        {
+
+            throw ValueError(
+                "Keys must be of type string, not "
+                + m[i][0].typeof().as<std::string>());
+        }
+
+        d[keys[i][0].as<std::string>()] = js_to_any(keys[i][1]);
+    }
+
+    return d;
+}

@@ -27,6 +27,11 @@ struct ValueError : public OTIOException
     using OTIOException::OTIOException;
 };
 
+struct TypeError : public OTIOException
+{
+    using OTIOException::OTIOException;
+};
+
 struct IOError : public OTIOException
 {
     using OTIOException::OTIOException;
