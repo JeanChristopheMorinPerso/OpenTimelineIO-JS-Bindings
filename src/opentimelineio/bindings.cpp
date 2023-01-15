@@ -206,7 +206,22 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             // to ems::select_overload<AnyDictionary&() noexcept>
             // Also, how will we override metadata? For example so.metadata?
             ems::select_overload<AnyDictionary() const noexcept>(
-                &SerializableObjectWithMetadata::metadata));
+                &SerializableObjectWithMetadata::metadata))
+        // TODO: This dirty, but so far I didn't find a nicer method.
+        // Binded getters seem to be read-only (it cannot return a pointer or a reference).
+        // Additionally, it seems impossible to accept a pointer or reference for the "this"
+        // in setters.
+        .function(
+            "set_metadata",
+            ems::optional_override([](SerializableObjectWithMetadata& so,
+                                      AnyDictionary metadata) {
+                std::cout << "Size before swap: "
+                                 + std::to_string(so.metadata().size()) + "\n";
+                AnyDictionary& old_metadata = so.metadata();
+                old_metadata                = metadata;
+                std::cout << "Size after swap: "
+                                 + std::to_string(so.metadata().size()) + "\n";
+            }));
 
     ems::class_<Marker, ems::base<SerializableObjectWithMetadata>>("Marker")
         .constructor(ems::optional_override([](std::string        name,

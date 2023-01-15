@@ -32,6 +32,9 @@ test("test_serialize_time", () => {
 
 test("test_cons", () => {
     const so = new opentimelineio.SerializableObjectWithMetadata()
-    so.metadata['foo'] = 'bar'
+    const met = so.metadata
+    met['foo'] = 'bar'
+    expect(met['foo']).toEqual('bar')
+    so.set_metadata(met)
     expect(so.metadata['foo']).toEqual('bar')
 })
