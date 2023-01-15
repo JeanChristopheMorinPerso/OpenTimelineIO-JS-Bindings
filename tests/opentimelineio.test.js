@@ -49,18 +49,6 @@ test('asd', () => {
     })
 })
 
-test('SOWithMetadata', () => {
-    const so = new lib.SerializableObjectWithMetadata("myobject", { "mykey": "myvalue" })
-    // Causes a "RuntimeError: memory access out of bounds" error.
-    // console.log(so.metadata)
-    // console.log(so.metadata.get('mykey'))
-    console.log('value of mykey:', so.metadata['mykey'])
-    so.metadata['asd'] = 'asdasasd'
-    console.log('value of asd:', so.metadata['asd'])
-    // console.log('value of asd2:', so.metadata.get('asd2'))
-    so.delete()
-})
-
 test('SerializableCollection', () => {
     const so1 = new lib.SerializableObject();
     const so2 = new lib.SerializableObject();

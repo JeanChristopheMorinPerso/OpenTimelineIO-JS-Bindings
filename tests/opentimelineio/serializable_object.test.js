@@ -29,3 +29,9 @@ test("test_serialize_time", () => {
     const decoded3 = opentimelineio.deserialize_json_from_string(encoded3)
     expect(tt).toEqual(decoded3)
 })
+
+test("test_cons", () => {
+    const so = new opentimelineio.SerializableObjectWithMetadata()
+    so.metadata['foo'] = 'bar'
+    expect(so.metadata['foo']).toEqual('bar')
+})
