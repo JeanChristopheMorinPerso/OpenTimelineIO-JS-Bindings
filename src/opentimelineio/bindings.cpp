@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -130,12 +131,24 @@ namespace {
 } // namespace
 // clang-format on
 
+struct SerializableObjectWrapper : public ems::wrapper<SerializableObject>
+{
+    EMSCRIPTEN_WRAPPER(SerializableObjectWrapper);
+};
+
+struct SerializableObjectWithMetadataWrapper
+    : public ems::wrapper<SerializableObjectWithMetadata>
+{
+    EMSCRIPTEN_WRAPPER(SerializableObjectWithMetadataWrapper);
+};
+
 EMSCRIPTEN_BINDINGS(opentimelineio)
 {
     ems::register_vector<SerializableObject*>("SOVector");
 
     ems::class_<SerializableObject>("SerializableObject")
         .constructor<>()
+        .allow_subclass<SerializableObjectWrapper>("SerializableObjectWrapper")
         .function("is_equivalent_to", &SerializableObject::is_equivalent_to)
         .function(
             "clone",
@@ -196,6 +209,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                 AnyDictionary d = js_map_to_cpp(metadata);
                 return new SerializableObjectWithMetadata(name, d);
             }))
+        .allow_subclass<SerializableObjectWithMetadataWrapper>(
+            "SerializableObjectWithMetadataWrapper")
         .property(
             "name",
             &SerializableObjectWithMetadata::name,
@@ -754,6 +769,62 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                         ErrorStatusHandler());
                 }));
 
+    // TODO: Test
+    ems::function(
+        "register_serializable_object_type",
+        ems::optional_override([](ems::val           class_object,
+                                  std::string const& schema_name,
+                                  int                schema_version) {
+            std::function<SerializableObject*()> create = [class_object]() {
+                ems::val                       js_so = class_object();
+                SerializableObject::Retainer<> r =
+                    js_so.as<SerializableObject::Retainer<>>();
+
+                // we need to dispose of the reference to python_so now,
+                // while r exists to keep the object we just created alive.
+                // (If we let python_so be destroyed when we leave the function,
+                // then the C++ object we just created would be immediately
+                // destroyed then.)
+                // TODO: Is this comment valid?
+
+                js_so = ems::val::object();
+                return r.take_value();
+            };
+
+            TypeRegistry::instance().register_type(
+                schema_name,
+                schema_version,
+                nullptr,
+                create,
+                schema_name);
+        }));
+
+    // TODO: Test
+    ems::function(
+        "set_type_record",
+        ems::optional_override(
+            [](SerializableObject* so, std::string const& schema_name) {
+                TypeRegistry::instance().set_type_record(
+                    so,
+                    schema_name,
+                    ErrorStatusHandler());
+            }),
+        ems::allow_raw_pointers());
+
+    // TODO: Test
+    ems::function(
+        "instance_from_schema",
+        ems::optional_override([](std::string const& schema_name,
+                                  int                schema_version,
+                                  ems::val           data) {
+            AnyDictionary object_data = js_map_to_cpp(data);
+            auto result = TypeRegistry::instance().instance_from_schema(
+                schema_name,
+                schema_version,
+                object_data,
+                ErrorStatusHandler());
+        }));
+
     ems::function(
         "serialize_json_to_string",
         ems::optional_override([](ems::val data) {
@@ -851,6 +922,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                       return label_to_schema_version_map(CORE_VERSION_MAP);
                   }));
 
+    // TODO: Test
     ems::function(
         "flatten_stack",
         ems::optional_override([](Stack* stack) {
@@ -858,15 +930,14 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         }),
         ems::allow_raw_pointers());
 
+    // TODO: Test
     ems::function(
         "flatten_stack",
         ems::optional_override([](std::vector<Track*> tracks) {
             return flatten_stack(tracks, ErrorStatusHandler());
         }),
         ems::allow_raw_pointers());
-    // TODO: register_serializable_object_type
-    // TODO: set_type_record
+
     // TODO: register_upgrade_function
     // TODO: register_downgrade_function
-    // TODO: instance_from_schema
 }
