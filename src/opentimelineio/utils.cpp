@@ -16,6 +16,7 @@
 #include <typeinfo>
 
 #include "exceptions.h"
+#include "js_anyDictionary.h" // Needed to support ems::val(AnyDictionary)
 #include "utils.h"
 
 namespace ems = emscripten;
@@ -154,10 +155,20 @@ any_to_js(any const& a, bool top_level)
     {
         return ems::val(safely_cast_time_transform_any(a));
     }
+    else if (tInfo == typeid(AnyDictionary*))
+    {
+        AnyDictionary* d = any_cast<AnyDictionary*>(a);
+        return ems::val(d);
+    }
     else if (tInfo == typeid(SerializableObject::Retainer<>))
     {
         SerializableObject* so = safely_cast_retainer_any(a);
         return ems::val(so);
+    }
+    else if (tInfo == typeid(AnyDictionary))
+    {
+        AnyDictionary& d = temp_safely_cast_any_dictionary_any(a);
+        return ems::val(d);
     }
 
     throw ValueError(string_printf(
@@ -165,9 +176,26 @@ any_to_js(any const& a, bool top_level)
         type_name_for_error_message(tInfo).c_str()));
 }
 
+// https://emscripten.org/docs/api_reference/emscripten.h.html?highlight=em_js#c.EM_JS
+// clang-format off
+// Get the real type of a JS value. "typeof" returns object in most cases,
+// which is useless. Be careful though as the return value has to be freed manually!
+EM_JS(char*, get_real_js_type, (ems::EM_VAL handle), {
+    var value = Emval.toValue(handle);
+    var name = value.constructor.name;
+
+    var lengthBytes = lengthBytesUTF8(name)+1;
+    var stringOnWasmHeap = _malloc(lengthBytes);
+    stringToUTF8(name, stringOnWasmHeap, lengthBytes);
+    return stringOnWasmHeap;
+});
+// clang-format on
+
 any
 js_to_any(ems::val const& item)
 {
+    std::string typ = item.typeof().as<std::string>();
+
     if (item.isNull() || item.isUndefined())
     {
         return any(nullptr);
@@ -193,6 +221,28 @@ js_to_any(ems::val const& item)
     if (item.isArray())
     {
         return any(js_array_to_cpp(item));
+    }
+
+    char*       rawType = get_real_js_type(item.as_handle());
+    std::string jsType  = std::string(rawType);
+    free(rawType);
+
+    if (jsType == "RationalTime")
+    {
+        RationalTime rt = item.as<RationalTime>();
+        return any(rt);
+    }
+
+    if (jsType == "TimeRange")
+    {
+        TimeRange rt = item.as<TimeRange>();
+        return any(rt);
+    }
+
+    if (jsType == "TimeTransform")
+    {
+        TimeTransform rt = item.as<TimeTransform>();
+        return any(rt);
     }
 
     if (item.typeOf().as<std::string>() == "object")

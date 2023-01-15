@@ -255,6 +255,9 @@ EMSCRIPTEN_BINDINGS(opentime)
             &TimeRange::range_from_start_end_time_inclusive);
 
     ems::class_<TimeTransform>("TimeTransform")
+        .constructor<>()
+        .constructor<RationalTime>()
+        .constructor<RationalTime, double>()
         .constructor<RationalTime, double, double>()
         .property("offset", &TimeTransform::offset)
         .property("scale", &TimeTransform::scale)

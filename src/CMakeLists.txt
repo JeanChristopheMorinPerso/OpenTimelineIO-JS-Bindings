@@ -64,7 +64,6 @@ message(STATUS "JS_COMPILE_FLAGS: ${JS_COMPILE_FLAGS}")
 set(OPENTIME_SRC ${CMAKE_CURRENT_SOURCE_DIR}/opentime)
 set(OPENTIME_DEPS
     ${OPENTIME_SRC}/bindings.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/errorStatusHandler.cpp
 )
 
 add_executable(opentime-js ${OPENTIME_SRC}/lib.cpp
@@ -103,7 +102,9 @@ set(OPENTIMEINEIO_DEPS
 )
 
 add_executable(opentimelineio-js ${OPENTIMELINEIO_SRC}/lib.cpp
-    ${OPENTIMEINEIO_DEPS})
+    ${OPENTIME_DEPS}
+    ${OPENTIMEINEIO_DEPS}
+)
 
 set_target_properties(opentimelineio-js
     PROPERTIES
