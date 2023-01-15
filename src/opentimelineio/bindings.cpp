@@ -11,6 +11,7 @@
 #include <opentimelineio/clip.h>
 #include <opentimelineio/composable.h>
 #include <opentimelineio/composition.h>
+#include <opentimelineio/deserialization.h>
 #include <opentimelineio/effect.h>
 #include <opentimelineio/externalReference.h>
 #include <opentimelineio/freezeFrame.h>
@@ -24,11 +25,14 @@
 #include <opentimelineio/missingReference.h>
 #include <opentimelineio/serializableCollection.h>
 #include <opentimelineio/serializableObject.h>
+#include <opentimelineio/serialization.h>
 #include <opentimelineio/stack.h>
+#include <opentimelineio/stackAlgorithm.h>
 #include <opentimelineio/timeEffect.h>
 #include <opentimelineio/timeline.h>
 #include <opentimelineio/track.h>
 #include <opentimelineio/transition.h>
+#include <opentimelineio/typeRegistry.h>
 #include <opentimelineio/unknownSchema.h>
 
 #include "errorStatusHandler.h"
@@ -310,13 +314,57 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         .value("never", Track::NeighborGapPolicy::never);
 
     // TODO: Implement
-    ems::class_<Track, ems::base<Composition>>("Track");
+    ems::class_<Track, ems::base<Composition>>("Track")
+        .constructor<>()
+        .constructor<std::string>()
+        .constructor(
+            ems::optional_override([](std::string const&       name,
+                                      std::vector<Composable*> children,
+                                      TimeRange const&         source_range,
+                                      std::string const&       kind,
+                                      ems::val                 metadata) {
+                Track* t = new Track(
+                    name,
+                    source_range,
+                    kind,
+                    js_map_to_cpp(metadata));
+                t->set_children(children, ErrorStatusHandler());
+                return t;
+            }))
+        .property("kind", &Track::kind, &Track::set_kind)
+        .function(
+            "neighbors_of",
+            ems::optional_override([](Track const&             t,
+                                      Composable&              item,
+                                      Track::NeighborGapPolicy policy) {
+                auto result =
+                    t.neighbors_of(&item, ErrorStatusHandler(), policy);
+                return result;
+            }));
 
     // TODO: Implement
     ems::class_<Track::Kind>("TrackKind");
 
     // TODO: Implement
-    ems::class_<Stack, ems::base<Composition>>("Stack");
+    ems::class_<Stack, ems::base<Composition>>("Stack")
+        .constructor<>()
+        .constructor<std::string>()
+        .constructor(
+            ems::optional_override([](std::string const&       name,
+                                      std::vector<Composable*> children,
+                                      TimeRange const&         source_range,
+                                      std::vector<Marker*>     markers,
+                                      std::vector<Effect*>     effects,
+                                      ems::val                 metadata) {
+                Stack* s = new Stack(
+                    name,
+                    source_range,
+                    js_map_to_cpp(metadata),
+                    effects,
+                    markers);
+                s->set_children(children, ErrorStatusHandler());
+                return s;
+            }));
 
     // TODO: Implement
     ems::class_<Timeline, ems::base<SerializableObjectWithMetadata>>(
@@ -610,17 +658,119 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                         ErrorStatusHandler());
                 }));
 
+    ems::function(
+        "serialize_json_to_string",
+        ems::optional_override([](ems::val data) {
+            return serialize_json_to_string(
+                js_to_any(data),
+                nullptr,
+                ErrorStatusHandler());
+        }));
+
+    ems::function(
+        "serialize_json_to_string",
+        ems::optional_override(
+            [](ems::val                  data,
+               schema_version_map const& schema_version_targets) {
+                return serialize_json_to_string(
+                    js_to_any(data),
+                    &schema_version_targets,
+                    ErrorStatusHandler());
+            }));
+
+    ems::function(
+        "serialize_json_to_string",
+        ems::optional_override(
+            [](ems::val                  data,
+               schema_version_map const& schema_version_targets,
+               int                       indent) {
+                return serialize_json_to_string(
+                    js_to_any(data),
+                    &schema_version_targets,
+                    ErrorStatusHandler(),
+                    indent);
+            }));
+
+    ems::function(
+        "serialize_json_to_file",
+        ems::optional_override([](ems::val data, std::string filename) {
+            return serialize_json_to_file(
+                js_to_any(data),
+                filename,
+                nullptr,
+                ErrorStatusHandler());
+        }));
+
+    ems::function(
+        "serialize_json_to_file",
+        ems::optional_override(
+            [](ems::val                  data,
+               std::string               filename,
+               schema_version_map const& schema_version_targets) {
+                return serialize_json_to_file(
+                    js_to_any(data),
+                    filename,
+                    &schema_version_targets,
+                    ErrorStatusHandler());
+            }));
+
+    ems::function(
+        "serialize_json_to_file",
+        ems::optional_override(
+            [](ems::val                  data,
+               std::string               filename,
+               schema_version_map const& schema_version_targets,
+               int                       indent) {
+                return serialize_json_to_file(
+                    js_to_any(data),
+                    filename,
+                    &schema_version_targets,
+                    ErrorStatusHandler(),
+                    indent);
+            }));
+
+    ems::function(
+        "deserialize_json_from_string",
+        ems::optional_override([](std::string input) {
+            any result;
+            deserialize_json_from_string(input, &result, ErrorStatusHandler());
+            return any_to_js(result, true);
+        }));
+
+    ems::function(
+        "deserialize_json_from_file",
+        ems::optional_override([](std::string filename) {
+            any result;
+            deserialize_json_from_file(filename, &result, ErrorStatusHandler());
+            return any_to_js(result, true);
+        }));
+
+    ems::function("type_version_map", ems::optional_override([]() {
+                      schema_version_map tmp;
+                      TypeRegistry::instance().type_version_map(tmp);
+                      return tmp;
+                  }));
+
+    ems::function("release_to_schema_version_map", ems::optional_override([]() {
+                      return label_to_schema_version_map(CORE_VERSION_MAP);
+                  }));
+
+    ems::function(
+        "flatten_stack",
+        ems::optional_override([](Stack* stack) {
+            return flatten_stack(stack, ErrorStatusHandler());
+        }),
+        ems::allow_raw_pointers());
+
+    ems::function(
+        "flatten_stack",
+        ems::optional_override([](std::vector<Track*> tracks) {
+            return flatten_stack(tracks, ErrorStatusHandler());
+        }),
+        ems::allow_raw_pointers());
     // TODO: register_serializable_object_type
     // TODO: set_type_record
     // TODO: register_upgrade_function
     // TODO: register_downgrade_function
-    // TODO: serialize_json_to_string
-    // TODO: serialize_json_to_file
-    // TODO: deserialize_json_from_string
-    // TODO: deserialize_json_from_file
     // TODO: instance_from_schema
-    // TODO: type_version_map
-    // TODO: release_to_schema_version_map
-    // TODO: flatten_stack
-    // TODO:
 }
