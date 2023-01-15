@@ -154,6 +154,11 @@ any_to_js(any const& a, bool top_level)
     {
         return ems::val(safely_cast_time_transform_any(a));
     }
+    else if (tInfo == typeid(SerializableObject::Retainer<>))
+    {
+        SerializableObject* so = safely_cast_retainer_any(a);
+        return ems::val(so);
+    }
 
     throw ValueError(string_printf(
         "Unable to cast any of type '%s' to JS object",

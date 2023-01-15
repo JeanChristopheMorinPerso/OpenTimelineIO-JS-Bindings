@@ -65,9 +65,102 @@ test('SerializableCollection', () => {
     const so1 = new lib.SerializableObject();
     const so2 = new lib.SerializableObject();
     new lib.SerializableCollection();
-    new lib.SerializableCollection("myname", [so1, so2]);
+    const vec = new lib.SOVector()
+    vec.push_back(so1)
+    vec.push_back(so2)
+    new lib.SerializableCollection("myname", vec);
 })
 
 test("Imath", () => {
     console.log(lib.V2d.baseTypeLowest)
+})
+
+test("stack algo", () => {
+    const track_d = lib.deserialize_json_from_string(`{
+        "OTIO_SCHEMA": "Track.1",
+        "children": [
+            {
+                "OTIO_SCHEMA": "Clip.1",
+                "effects": [],
+                "markers": [],
+                "media_reference": null,
+                "metadata": {},
+                "name": "A",
+                "source_range": {
+                    "OTIO_SCHEMA": "TimeRange.1",
+                    "duration": {
+                        "OTIO_SCHEMA": "RationalTime.1",
+                        "rate": 24,
+                        "value": 50
+                    },
+                    "start_time": {
+                        "OTIO_SCHEMA": "RationalTime.1",
+                        "rate": 24,
+                        "value": 0.0
+                    }
+                }
+            },
+            {
+                "OTIO_SCHEMA": "Clip.1",
+                "effects": [],
+                "markers": [],
+                "media_reference": null,
+                "metadata": {},
+                "name": "B",
+                "source_range": {
+                    "OTIO_SCHEMA": "TimeRange.1",
+                    "duration": {
+                        "OTIO_SCHEMA": "RationalTime.1",
+                        "rate": 24,
+                        "value": 50
+                    },
+                    "start_time": {
+                        "OTIO_SCHEMA": "RationalTime.1",
+                        "rate": 24,
+                        "value": 0.0
+                    }
+                }
+            },
+            {
+                "OTIO_SCHEMA": "Clip.1",
+                "effects": [],
+                "markers": [],
+                "media_reference": null,
+                "metadata": {},
+                "name": "C",
+                "source_range": {
+                    "OTIO_SCHEMA": "TimeRange.1",
+                    "duration": {
+                        "OTIO_SCHEMA": "RationalTime.1",
+                        "rate": 24,
+                        "value": 50
+                    },
+                    "start_time": {
+                        "OTIO_SCHEMA": "RationalTime.1",
+                        "rate": 24,
+                        "value": 0.0
+                    }
+                }
+            }
+        ],
+        "effects": [],
+        "kind": "Video",
+        "markers": [],
+        "metadata": {},
+        "name": "Sequence1",
+        "source_range": null
+    }`)
+
+    const children = track_d.find_children()
+    console.log(children)
+    // https://github.com/AcademySoftwareFoundation/OpenTimelineIO/blob/80d341bfd74b56d2011204fa2d0f4dfe02ff821b/tests/test_stack_algo.py#L449
+    // stack = otio.schema.Stack(children=[
+    //     self.trackABC,
+    //     self.track_d
+    // ])
+    // flat_track = otio.algorithms.flatten_stack(stack)
+    // self.assertJsonEqual(
+    //     flat_track[:],
+    //     self.trackABC[:]
+    // )
 })

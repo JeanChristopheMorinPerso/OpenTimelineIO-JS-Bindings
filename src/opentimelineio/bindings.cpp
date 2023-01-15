@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
+#include <optional>
 #include <string>
+#include <vector>
 
 #include <ImathBox.h>
 #include <emscripten/bind.h>
@@ -72,8 +74,66 @@ REGISTER_DESTRUCTOR(ImageSequenceReference);
 // https://sourcegraph.com/github.com/rive-app/rive-wasm@97fb62582fe69bdae8ef16ac39f23fce620dd010/-/blob/wasm/src/bindings.cpp?L52:16-52:39
 static const std::string DEFAULT_MEDIA_KEY = "DEFAULT_MEDIA";
 
+// clang-format off
+namespace {
+
+    // template<typename T>
+    // std::vector<T*> vector_or_default(optional<std::vector<T*>> item) {
+    //     if (item.has_value()) {
+    //         return item.value();
+    //     }
+
+    //     return std::vector<T*>();
+    // }
+
+    template<typename T, typename U>
+    bool find_children(T* t, ems::val descended_from_type, optional<TimeRange> const& search_range, bool shallow_search, std::vector<SerializableObject*>& l) {
+        // TODO: Bad!
+        if (true)
+        {
+            for (const auto& child : t->template find_children<U>(ErrorStatusHandler(), search_range, shallow_search)) {
+                l.push_back(child.value);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    template<typename T>
+    std::vector<SerializableObject*> find_children(T* t, ems::val descended_from_type, optional<TimeRange> const& search_range, bool shallow_search = false) {
+        std::vector<SerializableObject*> l;
+        if (find_children<T, Clip>(t, descended_from_type, search_range, shallow_search, l)) ;
+        else if (find_children<T, Composition>(t, descended_from_type, search_range, shallow_search, l)) ;
+        else if (find_children<T, Gap>(t, descended_from_type, search_range, shallow_search, l)) ;
+        else if (find_children<T, Item>(t, descended_from_type, search_range, shallow_search, l)) ;
+        else if (find_children<T, Stack>(t, descended_from_type, search_range, shallow_search, l)) ;
+        else if (find_children<T, Timeline>(t, descended_from_type, search_range, shallow_search, l)) ;
+        else if (find_children<T, Track>(t, descended_from_type, search_range, shallow_search, l)) ;
+        else if (find_children<T, Transition>(t, descended_from_type, search_range, shallow_search, l)) ;
+        else
+        {
+            for (const auto& child : t->template find_children<Composable>(ErrorStatusHandler(), search_range, shallow_search)) {
+                l.push_back(child.value);
+            }
+        }
+        return l;
+    }
+
+    template<typename T>
+    std::vector<SerializableObject*> find_clips(T* t, optional<TimeRange> const& search_range, bool shallow_search = false) {
+        std::vector<SerializableObject*> l;
+        for (const auto& clip : t->find_clips(ErrorStatusHandler(), search_range, shallow_search)) {
+            l.push_back(clip.value);
+        }
+        return l;
+    }
+} // namespace
+// clang-format on
+
 EMSCRIPTEN_BINDINGS(opentimelineio)
 {
+    ems::register_vector<SerializableObject*>("SOVector");
+
     ems::class_<SerializableObject>("SerializableObject")
         .constructor<>()
         .function("is_equivalent_to", &SerializableObject::is_equivalent_to)
@@ -168,9 +228,6 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     // TODO: Should this be an enum or maybe something else?
     ems::class_<Marker::Color>("MarkerColor");
 
-    // ems::register_vector<SerializableObject>("SerializableObjectVector");
-
-    // TODO: Doesn't work.
     ems::class_<
         SerializableCollection,
         ems::base<SerializableObjectWithMetadata>>("SerializableCollection")
@@ -305,7 +362,31 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             ems::allow_raw_pointers());
 
     // TODO: Implement
-    ems::class_<Composition, ems::base<Item>>("Composition");
+    ems::class_<Composition, ems::base<Item>>("Composition")
+        .constructor(
+            ems::optional_override([](std::string const&       name,
+                                      std::vector<Composable*> children,
+                                      TimeRange                source_range,
+                                      ems::val                 metadata) {
+                Composition* c = new Composition(
+                    name,
+                    source_range,
+                    js_map_to_cpp(metadata));
+                c->set_children(children, ErrorStatusHandler());
+                return c;
+            }))
+        // TODO: It works but the returned vector contains zero item.
+        .function(
+            "find_children",
+            ems::optional_override([](Composition const& c) {
+                std::vector<SerializableObject*> l;
+                for (const auto& composable:
+                     c.find_children(ErrorStatusHandler()))
+                {
+                    l.push_back(composable.value);
+                }
+                return l;
+            }));
 
     ems::enum_<Track::NeighborGapPolicy>("TrackNeighborGapPolicy")
         .value(
