@@ -149,6 +149,14 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::class_<SerializableObject>("SerializableObject")
         .constructor<>()
         .allow_subclass<SerializableObjectWrapper>("SerializableObjectWrapper")
+        .function("_get_dynamic_fields", &SerializableObject::dynamic_fields)
+        .function(
+            "_set_dynamic_fields",
+            ems::optional_override([](SerializableObject&  so,
+                                      AnyDictionary const& dynamic_fields) {
+                AnyDictionary& old_fields = so.dynamic_fields();
+                old_fields                = dynamic_fields;
+            }))
         .function("is_equivalent_to", &SerializableObject::is_equivalent_to)
         .function(
             "clone",

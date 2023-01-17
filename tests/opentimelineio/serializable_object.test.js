@@ -39,25 +39,53 @@ test("test_cons", () => {
     expect(so.metadata['foo']).toEqual('bar')
 })
 
+
+/**
+ * Create a property (getter + setter) that OTIO will be able
+ * to serialize/deserialize.
+ * @param {Object} klass Class to attach the property to.
+ * @param {string} name Name of the property to create.
+ * @param {any} [required_type] Property type
+ */
+function serializable_field(klass, name, required_type) {
+    Object.defineProperty(klass.prototype, name, {
+        get() {
+            return this._get_dynamic_fields()[name]
+        },
+        set(value) {
+            // TODO: Test for null and undefined?
+            if (required_type && value) {
+                if (value instanceof required_type) {
+                    throw new Error('TODO: Error message')
+                }
+            }
+            const fields = this._get_dynamic_fields();
+            fields[name] = value;
+
+            this._set_dynamic_fields(fields)
+            console.log(this._get_dynamic_fields())
+        }
+    })
+}
+
 test("test_copy_subclass", () => {
-    var MyFoo = opentimelineio.SerializableObjectWithMetadata.extend("SerializableObjectWithMetadata", {
-        // __construct and __destruct are optional.  They are included
-        // in this example for illustration purposes.
-        // If you override __construct or __destruct, don't forget to
-        // call the parent implementation!
-        __construct: function () {
-            this.__parent.__construct.call(this);
+    // TODO: Document this.
+    // Also, the embind docs documents another method. This method is taken from https://github.com/emscripten-core/emscripten/issues/7200#issuecomment-442323087
+    class MyFoo extends opentimelineio.SerializableObjectWithMetadata.extend('MyFoo', {}) {
+        constructor() {
+            super()
             opentimelineio.set_type_record(this, 'MyFoo')
-        },
-        __destruct: function () {
-            this.__parent.__destruct.call(this);
-        },
-        invoke: function () {
+        }
+
+        invoke() {
             // your code goes here
             console.log('asd')
             console.log(this.metadata)
-        },
-    })
+        }
+
+        _ = serializable_field(MyFoo, 'myprop1')
+        _ = serializable_field(MyFoo, 'myprop2')
+    }
 
     opentimelineio.register_serializable_object_type(MyFoo, 'MyFoo', 1)
     const asd = new MyFoo();
@@ -66,11 +94,17 @@ test("test_copy_subclass", () => {
     asd.set_metadata(met)
     asd.invoke();
 
+    asd.myprop1 = '1234'
+
     expect(asd.to_json_string(4)).toEqual(`{
     "OTIO_SCHEMA": "MyFoo.1",
+    "myprop1": "1234",
     "metadata": {
         "asdasd": "value"
     },
     "name": ""
 }`)
+
+    // TODO: Calling to_json_sring a second time raises "RuntimeError: table index is out of bounds"
+    //asd.to_json_string(4)
 })

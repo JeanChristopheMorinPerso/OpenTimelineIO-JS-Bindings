@@ -67,7 +67,7 @@ EMSCRIPTEN_BINDINGS(opentime)
         .value("InferFromRate", IsDropFrameRate::InferFromRate);
 
     ems::class_<RationalTime>("RationalTime")
-        .constructor()
+        .constructor<>()
         .constructor<double>()
         .constructor<double, double>()
         .function("is_invalid_time", &RationalTime::is_invalid_time)
