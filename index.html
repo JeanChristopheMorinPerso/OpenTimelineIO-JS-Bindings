@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>OTIO WASM</title>
+    <script src="install/opentimelineio.js"></script>
+</head>
+
+<body>
+    <script>
+        OpenTimelineIO().then((lib) => {
+            const asd = new lib.SerializableObject();
+            // asd.set_metadata({ 'mykey': 'myvalue' })
+            // console.log(asd.to_json_string(4))
+            console.log(asd.to_json_string(4))
+            console.log(asd.schema_name())
+            console.log(asd.schema_name())
+            asd.delete()
+        })
+    </script>
+</body>
+
+</html>
