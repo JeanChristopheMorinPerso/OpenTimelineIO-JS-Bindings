@@ -107,4 +107,12 @@ test("test_copy_subclass", () => {
 
     // TODO: Calling to_json_sring a second time raises "RuntimeError: table index is out of bounds"
     //asd.to_json_string(4)
+
+test("asd", () => {
+    const asd = new opentimelineio.SerializableObject();
+    // asd.set_metadata({ 'mykey': 'myvalue' })
+    console.log(asd.to_json_string(4))
+    console.log(asd.to_json_string(4))
+    console.log(asd.schema_name())
+    console.log(asd.schema_name())
 })

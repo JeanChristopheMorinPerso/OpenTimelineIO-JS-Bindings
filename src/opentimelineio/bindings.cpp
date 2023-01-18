@@ -142,12 +142,121 @@ struct SerializableObjectWithMetadataWrapper
     EMSCRIPTEN_WRAPPER(SerializableObjectWithMetadataWrapper);
 };
 
+struct KeepaliveMonitor
+{
+    SerializableObject* _so;
+    ems::val            _keep_alive;
+
+    KeepaliveMonitor(SerializableObject* so)
+        : _so(so)
+    {
+        printf("Constructing KeepaliveMonitor");
+    }
+
+    void monitor()
+    {
+        printf("KeepaliveMonitor::monitor\n");
+        if (_so->current_ref_count() > 1)
+        {
+            printf("KeepaliveMonitor::monitor: current_ref_count > 1\n");
+            if (!_keep_alive)
+            {
+                printf(
+                    "KeepaliveMonitor::monitor: _keep_alive is empty, setting it\n");
+                _keep_alive = ems::val(_so);
+            }
+        }
+        else
+        {
+            printf("KeepaliveMonitor::monitor: current_ref_count < 1\n");
+            // Note that ems::val works with ! only. SO double negate to get the truthy value.
+            if (!!_keep_alive)
+            {
+                printf(
+                    "KeepaliveMonitor::monitor: _keep_alive is truthy, trying to set to to undefined (clearing)\n");
+                _keep_alive =
+                    ems::val::undefined(); // this could cause destruction
+            }
+        }
+        printf("KeepaliveMonitor::monitor: end\n");
+    }
+};
+
+void
+install_external_keepalive_monitor(SerializableObject* so, bool apply_now)
+{
+    KeepaliveMonitor m{ so };
+    using namespace std::placeholders;
+    printf(
+        "Install external keep alive for %p: apply now is %d\n",
+        so,
+        apply_now);
+    so->install_external_keepalive_monitor(
+        std::bind(&KeepaliveMonitor::monitor, m),
+        apply_now);
+}
+
+template <typename T>
+struct managing_ptr
+{
+    managing_ptr()
+        : _retainer(nullptr)
+    {
+        printf("Created managing_ptr (nullptr)\n");
+    }
+
+    explicit managing_ptr(T* ptr)
+        : _retainer(ptr)
+    {
+        printf("Created managing_ptr\n");
+        install_external_keepalive_monitor(ptr, false);
+    }
+
+    T* get() const { return _retainer.value; }
+
+    SerializableObject::Retainer<> _retainer;
+};
+
+namespace emscripten {
+template <typename T>
+struct smart_ptr_trait<managing_ptr<T>>
+{
+    typedef managing_ptr<T> pointer_type;
+    typedef T               element_type;
+
+    static sharing_policy get_sharing_policy()
+    {
+        // TODO: Is this the right policy? This is undocumented so...
+        return sharing_policy::INTRUSIVE;
+    }
+
+    static T* get(const managing_ptr<T>& p) { return p.get(); }
+
+    static managing_ptr<T> share(const managing_ptr<T>& r, T* ptr)
+    {
+        return managing_ptr<T>(ptr);
+    }
+
+    static pointer_type* construct_null() { return new pointer_type; }
+};
+} // namespace emscripten
+
+template <typename T>
+managing_ptr<T>
+make_managing_ptr()
+{
+    return managing_ptr<T>(new T);
+}
+
 EMSCRIPTEN_BINDINGS(opentimelineio)
 {
     ems::register_vector<SerializableObject*>("SOVector");
 
     ems::class_<SerializableObject>("SerializableObject")
-        .constructor<>()
+        // .constructor<>()
+        .smart_ptr_constructor(
+            "SerializableObjectPtr",
+            &make_managing_ptr<SerializableObject>)
         .allow_subclass<SerializableObjectWrapper>("SerializableObjectWrapper")
         .function("_get_dynamic_fields", &SerializableObject::dynamic_fields)
         .function(
