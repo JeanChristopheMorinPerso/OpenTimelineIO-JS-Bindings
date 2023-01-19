@@ -275,21 +275,19 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             ems::allow_raw_pointers())
         .function(
             "to_json_string",
-            ems::optional_override([](SerializableObject* so, int indent) {
-                return so->to_json_string(ErrorStatusHandler(), {}, indent);
-            }),
-            ems::allow_raw_pointers())
+            ems::optional_override([](SerializableObject& so, int indent) {
+                return so.to_json_string(ErrorStatusHandler(), {}, indent);
+            }))
         .function(
             "to_json_file",
             ems::optional_override(
-                [](SerializableObject* so, std::string file_name, int indent) {
-                    return so->to_json_file(
+                [](SerializableObject& so, std::string file_name, int indent) {
+                    return so.to_json_file(
                         file_name,
                         ErrorStatusHandler(),
                         {},
                         indent);
-                }),
-            ems::allow_raw_pointers())
+                }))
         .class_function(
             "from_json_string",
             ems::optional_override([](std::string input) {
