@@ -257,7 +257,11 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         .smart_ptr_constructor(
             "SerializableObjectPtr",
             &make_managing_ptr<SerializableObject>)
-        .allow_subclass<SerializableObjectWrapper>("SerializableObjectWrapper")
+        .allow_subclass<
+            SerializableObjectWrapper,
+            managing_ptr<SerializableObjectWrapper>>(
+            "SerializableObjectWrapper",
+            "SerializableObjectWrapperPtr")
         .function("_get_dynamic_fields", &SerializableObject::dynamic_fields)
         .function(
             "_set_dynamic_fields",
@@ -267,8 +271,10 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                 old_fields                = dynamic_fields;
             }))
         .function("is_equivalent_to", &SerializableObject::is_equivalent_to)
+        // Don't override Emscripten's own clone method. This can cause exceptions like:
+        // TypeError: Class constructor MyFoo cannot be invoked without 'new'
         .function(
-            "clone",
+            "clone_otio",
             ems::optional_override([](SerializableObject* so) {
                 return so->clone(ErrorStatusHandler());
             }),
