@@ -109,10 +109,27 @@ test("test_copy_subclass", () => {
     //asd.to_json_string(4)
 
 test("asd", () => {
-    const asd = new opentimelineio.SerializableObject();
+    // const asd = new opentimelineio.SerializableObject();
     // asd.set_metadata({ 'mykey': 'myvalue' })
-    console.log(asd.to_json_string(4))
-    console.log(asd.to_json_string(4))
-    console.log(asd.schema_name())
-    console.log(asd.schema_name())
+    // console.log(asd.to_json_string(4))
+    // console.log(asd.to_json_string(4))
+    // console.log(asd.schema_name())
+    // console.log(asd.schema_name())
+    // asd.delete()
+
+
+    const soMetadata = new opentimelineio.SerializableObjectWithMetadata()
+    console.log(soMetadata.to_json_string(4))
+    console.log(soMetadata.to_json_string(4))
+    soMetadata.delete()
+
+    const soMetadata2 = new opentimelineio.SerializableObjectWithMetadata("myname")
+    console.log(soMetadata2.to_json_string(4))
+    console.log(soMetadata2.to_json_string(4))
+    soMetadata2.delete()
+
+    const soMetadata3 = new opentimelineio.SerializableObjectWithMetadata("myname", { myky: 'myvalue' })
+    console.log(soMetadata3.to_json_string(4))
+    console.log(soMetadata3.to_json_string(4))
+    soMetadata3.delete()
 })

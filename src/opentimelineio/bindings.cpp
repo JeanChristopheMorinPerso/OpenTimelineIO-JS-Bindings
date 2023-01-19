@@ -150,7 +150,7 @@ struct KeepaliveMonitor
     KeepaliveMonitor(SerializableObject* so)
         : _so(so)
     {
-        printf("Constructing KeepaliveMonitor");
+        printf("Constructing KeepaliveMonitor for %s\n", typeid(*so).name());
     }
 
     void monitor()
@@ -199,6 +199,7 @@ install_external_keepalive_monitor(SerializableObject* so, bool apply_now)
 template <typename T>
 struct managing_ptr
 {
+
     managing_ptr()
         : _retainer(nullptr)
     {
@@ -214,7 +215,7 @@ struct managing_ptr
 
     T* get() const { return _retainer.value; }
 
-    SerializableObject::Retainer<> _retainer;
+    SerializableObject::Retainer<T> _retainer;
 };
 
 namespace emscripten {
@@ -241,11 +242,11 @@ struct smart_ptr_trait<managing_ptr<T>>
 };
 } // namespace emscripten
 
-template <typename T>
+template <class T, typename... Targs>
 managing_ptr<T>
-make_managing_ptr()
+make_managing_ptr(Targs&&... args)
 {
-    return managing_ptr<T>(new T);
+    return managing_ptr<T>(new T(std::forward<Targs>(args)...));
 }
 
 EMSCRIPTEN_BINDINGS(opentimelineio)
@@ -253,7 +254,6 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::register_vector<SerializableObject*>("SOVector");
 
     ems::class_<SerializableObject>("SerializableObject")
-        // .constructor<>()
         .smart_ptr_constructor(
             "SerializableObjectPtr",
             &make_managing_ptr<SerializableObject>)
@@ -319,12 +319,22 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
 
     ems::class_<SerializableObjectWithMetadata, ems::base<SerializableObject>>(
         "SerializableObjectWithMetadata")
-        .constructor<>()
-        .constructor<std::string>()
+        // To be able to overload smpart_prt constructors, we need to call "smart_ptr"
+        // and then we can simply overload using `constructor(<smart pointer here>)`.
+        // This is badly documented. Found at https://github.com/emscripten-core/emscripten/issues/11170#issuecomment-634113785.
+        // And if we want to actually have a custom function in the constructor,
+        // it's like usual, but we need to return a "managing_ptr" instead of the usual raw pointer
+        // to the object. This last bit was figured out by me, all by myself.
+        .smart_ptr<managing_ptr<SerializableObjectWithMetadata>>(
+            "SerializableObjectWithMetadataPtr")
+        .constructor(&make_managing_ptr<SerializableObjectWithMetadata>)
+        .constructor(
+            &make_managing_ptr<SerializableObjectWithMetadata, std::string>)
         .constructor(
             ems::optional_override([](std::string name, ems::val metadata) {
                 AnyDictionary d = js_map_to_cpp(metadata);
-                return new SerializableObjectWithMetadata(name, d);
+                return managing_ptr<SerializableObjectWithMetadata>(
+                    new SerializableObjectWithMetadata(name, d));
             }))
         .allow_subclass<SerializableObjectWithMetadataWrapper>(
             "SerializableObjectWithMetadataWrapper")
