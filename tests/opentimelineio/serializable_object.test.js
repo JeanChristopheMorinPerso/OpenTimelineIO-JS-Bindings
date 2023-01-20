@@ -30,13 +30,15 @@ test("test_serialize_time", () => {
     expect(tt).toEqual(decoded3)
 })
 
+// TODO: Add more metadata (cover all possible types)
+test("test_metadata", () => {
 test("test_cons", () => {
     const so = new opentimelineio.SerializableObjectWithMetadata()
-    const met = so.metadata
+    const met = so.get_metadata()
     met['foo'] = 'bar'
     expect(met['foo']).toEqual('bar')
     so.set_metadata(met)
-    expect(so.metadata['foo']).toEqual('bar')
+    expect(so.get_metadata()['foo']).toEqual('bar')
     so.delete()
 })
 
@@ -104,8 +106,6 @@ test("test_subclass", () => {
     // Verify that the C++ object is still alive. If it's not it will crash.
     instance1.to_json_string(4)
 
-    // TODO: Calling to_json_sring a second time raises "RuntimeError: table index is out of bounds"
-    // instance1.to_json_string(4)
     instance1.delete();
 
     // Test using "old" class style. Note that the first argument to extend needs to match
@@ -134,7 +134,6 @@ test("test_subclass", () => {
 
 test("asd", () => {
     const asd = new opentimelineio.SerializableObject();
-    asd.set_metadata({ 'mykey': 'myvalue' })
     console.log(asd.to_json_string(4))
     console.log(asd.to_json_string(4))
     console.log(asd.schema_name())
@@ -155,4 +154,89 @@ test("asd", () => {
     console.log(soMetadata3.to_json_string(4))
     console.log(soMetadata3.to_json_string(4))
     soMetadata3.delete()
+})
+
+test.skip('test_copy_lib', () => {
+    const so = new opentimelineio.SerializableObjectWithMetadata('', { 'foo': 'bar' })
+
+    const so_copy = so.clone_otio()
+
+    expect(so.is_equivalent_to(so_copy)).toEqual(true)
+
+    const met = so_copy.get_metadata()
+    met['asdasd'] = 'random value'
+    so_copy.set_metadata(met)
+
+    expect(so.is_equivalent_to(so_copy)).toEqual(false)
+    so.delete()
+    so_copy.delete()
+})
+
+test('equality', () => {
+    const so1 = new opentimelineio.SerializableObject()
+    const so2 = new opentimelineio.SerializableObject()
+    expect(so1.is_equivalent_to(so2)).toEqual(true)
+    so1.delete()
+    so2.delete()
+})
+
+test('test_truthiness', () => {
+    const so = new opentimelineio.SerializableObject()
+    expect(so).toBeTruthy()
+})
+
+test.skip('test_instancing_without_instancing_support', () => {
+    const so1 = new opentimelineio.SerializableObjectWithMetadata()
+    const so2 = new opentimelineio.SerializableObjectWithMetadata()
+    const met = so1.get_metadata()
+    met['child1'] = so2
+    met['child2'] = so2
+    so1.set_metadata(met)
+
+    const so_copy = so1.clone_otio()
+
+    const met2 = so_copy.get_metadata()
+    const so3 = met2['child2']
+    so3.set_metadata({ 'sub': 'so3' })
+
+    expect(so1.is_equivalent_to(so_copy)).toBeFalsy()
+    so1.delete()
+    so2.delete()
+    so3.delete()
+})
+
+test.skip('test_schema_definition', () => {
+    // Define a schema and instantiate it from JS
+
+    // TODO: Re-enable once std::unordered_map is bound.
+    // expect(opentimelineio.type_version_map()).not.toContain('Stuff')
+
+    class FakeThing extends opentimelineio.SerializableObject.extend('FakeThing', {}) {
+        constructor() {
+            super()
+            opentimelineio.set_type_record(this, 'Stuff')
+        }
+
+        _ = serializable_field(FakeThing, 'foo_two')
+    }
+
+    opentimelineio.register_serializable_object_type(FakeThing, 'Stuff', 1)
+
+    const ft = new FakeThing()
+
+    expect(ft.schema_name()).toEqual('Stuff')
+    expect(ft.schema_version()).toEqual(1)
+
+    // TODO: This throw but not for the good reason.
+    // It raises: TypeError: Class constructor FakeThing cannot be invoked without 'new'
+    // It should raise an UnknownSchemaError.
+    expect(() => {
+        opentimelineio.instance_from_schema('Stuff', 2, { 'foo': 'bar' })
+    }).toThrow()
+
+    // version_map = otio.core.type_version_map()
+    // self.assertEqual(version_map["Stuff"], 1)
+
+    // ft = otio.core.instance_from_schema("Stuff", 1, {"foo": "bar"})
+    // self.assertEqual(ft._dynamic_fields['foo'], "bar")
 })

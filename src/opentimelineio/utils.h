@@ -40,4 +40,15 @@ AnyDictionary js_map_to_cpp(ems::val const& item);
     }                                                                          \
     } // namespace emscripten::internal
 
+/**
+ * Macro that wraps EMSCRIPTEN_WRAPPER to register a wrapper for subclasses.
+ * @param TYPE Type name without a namespace.
+ * @param NAME Name to use for the wrapper.
+*/
+#define REGISTER_WRAPPER(TYPE, NAME)                                           \
+    struct NAME : public ems::wrapper<TYPE>                                    \
+    {                                                                          \
+        EMSCRIPTEN_WRAPPER(NAME);                                              \
+    };
+
 #endif // JS_UTILS_H

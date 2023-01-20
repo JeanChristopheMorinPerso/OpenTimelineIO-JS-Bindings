@@ -131,16 +131,10 @@ namespace {
 } // namespace
 // clang-format on
 
-struct SerializableObjectWrapper : public ems::wrapper<SerializableObject>
-{
-    EMSCRIPTEN_WRAPPER(SerializableObjectWrapper);
-};
-
-struct SerializableObjectWithMetadataWrapper
-    : public ems::wrapper<SerializableObjectWithMetadata>
-{
-    EMSCRIPTEN_WRAPPER(SerializableObjectWithMetadataWrapper);
-};
+REGISTER_WRAPPER(SerializableObject, SerializableObjectWrapper);
+REGISTER_WRAPPER(
+    SerializableObjectWithMetadata,
+    SerializableObjectWithMetadataWrapper);
 
 struct KeepaliveMonitor
 {
@@ -297,19 +291,19 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         .class_function(
             "from_json_string",
             ems::optional_override([](std::string input) {
-                return SerializableObject::from_json_string(
-                    input,
-                    ErrorStatusHandler());
-            }),
-            ems::allow_raw_pointers())
+                return managing_ptr<SerializableObject>(
+                    SerializableObject::from_json_string(
+                        input,
+                        ErrorStatusHandler()));
+            }))
         .class_function(
             "from_json_file",
             ems::optional_override([](std::string file_name) {
-                return SerializableObject::from_json_file(
-                    file_name,
-                    ErrorStatusHandler());
-            }),
-            ems::allow_raw_pointers())
+                return managing_ptr<SerializableObject>(
+                    SerializableObject::from_json_file(
+                        file_name,
+                        ErrorStatusHandler()));
+            }))
         .function("schema_name", &SerializableObject::schema_name)
         .function("schema_version", &SerializableObject::schema_version)
         .property("is_unknown_schema", &SerializableObject::is_unknown_schema);
@@ -340,8 +334,11 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                 return managing_ptr<SerializableObjectWithMetadata>(
                     new SerializableObjectWithMetadata(name, d));
             }))
-        .allow_subclass<SerializableObjectWithMetadataWrapper>(
-            "SerializableObjectWithMetadataWrapper")
+        .allow_subclass<
+            SerializableObjectWithMetadataWrapper,
+            managing_ptr<SerializableObjectWithMetadataWrapper>>(
+            "SerializableObjectWithMetadataWrapper",
+            "SerializableObjectWithMetadataWrapperPtr")
         .property(
             "name",
             &SerializableObjectWithMetadata::name,
@@ -370,15 +367,18 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             }));
 
     ems::class_<Marker, ems::base<SerializableObjectWithMetadata>>("Marker")
-        .constructor(ems::optional_override([](std::string        name,
-                                               TimeRange          marked_range,
+        .smart_ptr<managing_ptr<Marker>>("MarkerPtr")
+        .constructor(&make_managing_ptr<Marker>)
+        .constructor(&make_managing_ptr<Marker, std::string>)
+        .constructor(&make_managing_ptr<Marker, std::string, TimeRange>)
+        .constructor(
+            &make_managing_ptr<Marker, std::string, TimeRange, std::string>)
+        .constructor(ems::optional_override([](std::string const& name,
+                                               TimeRange const&   marked_range,
                                                std::string const& color,
-                                               ems::val           metadata) {
-            return new Marker(
-                name,
-                marked_range,
-                color,
-                js_map_to_cpp(metadata));
+                                               ems::val const&    metadata) {
+            return managing_ptr<Marker>(
+                new Marker(name, marked_range, color, js_map_to_cpp(metadata)));
         }))
         .property("color", &Marker::color, &Marker::set_color)
         .property(
@@ -392,6 +392,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::class_<
         SerializableCollection,
         ems::base<SerializableObjectWithMetadata>>("SerializableCollection")
+
         .constructor<>()
         .constructor<std::string>()
         .constructor(ems::optional_override(
@@ -414,13 +415,17 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
 
     ems::class_<Composable, ems::base<SerializableObjectWithMetadata>>(
         "Composable")
-        .constructor<>()
-        .constructor<std::string>()
+        .smart_ptr<managing_ptr<Composable>>("ComposablePtr")
+        .constructor(&make_managing_ptr<Composable>)
+        .constructor(&make_managing_ptr<Composable, std::string>)
         .constructor(ems::optional_override(
             [](std ::string const& name, ems::val metadata) {
-                return new Composable(name, js_map_to_cpp(metadata));
+                return managing_ptr<Composable>(
+                    new Composable(name, js_map_to_cpp(metadata)));
             }))
-        .function("parent", &Composable::parent, ems::allow_raw_pointers());
+        .function("parent", &Composable::parent, ems::allow_raw_pointers())
+        .function("function", &Composable::visible)
+        .function("overlapping", &Composable::overlapping);
 
     // TODO: Implement
     ems::class_<Item, ems::base<Composable>>("Item");
@@ -949,21 +954,37 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                                   int                schema_version,
                                   ems::val           data) {
             AnyDictionary object_data = js_map_to_cpp(data);
-            auto result = TypeRegistry::instance().instance_from_schema(
+            // TODO: We might need to use managing_ptr?
+            return TypeRegistry::instance().instance_from_schema(
                 schema_name,
                 schema_version,
                 object_data,
                 ErrorStatusHandler());
-        }));
+        }),
+        ems::allow_raw_pointers());
 
     ems::function(
         "serialize_json_to_string",
-        ems::optional_override([](ems::val data) {
+        ems::optional_override([](SerializableObject* so) {
+            // This is required because serialize_json_to_string needsa retainers.
+            SerializableObject::Retainer<> retainer = so;
+
             return serialize_json_to_string(
-                js_to_any(data),
+                any(retainer),
                 nullptr,
                 ErrorStatusHandler());
-        }));
+        }),
+        ems::allow_raw_pointers());
+
+    // TODO: Figure out why when we use this, js_to_any returns an AnyDictionary...
+    // ems::function(
+    //     "serialize_json_to_string",
+    //     ems::optional_override([](ems::val data) {
+    //         return serialize_json_to_string(
+    //             js_to_any(data),
+    //             nullptr,
+    //             ErrorStatusHandler());
+    //     }));
 
     ems::function(
         "serialize_json_to_string",
