@@ -12,6 +12,8 @@ beforeAll(async () => {
     opentimelineio = await opentimelineioFactory();
 });
 
+// This can look weird, but serializatin and deserialization is part of
+// opentimelineio, not opentime.
 test("test_serialize_time", () => {
     const rt = new opentimelineio.RationalTime(15, 24);
     const encoded = opentimelineio.serialize_json_to_string(rt);
@@ -45,6 +47,9 @@ test("test_metadata", () => {
 /**
  * Create a property (getter + setter) that OTIO will be able
  * to serialize/deserialize.
+ *
+ * TODO: Move into pre/post js This shouldn't live in tests.
+ *
  * @param {Object} klass Class to attach the property to.
  * @param {string} name Name of the property to create.
  * @param {any} [required_type] Property type
@@ -84,7 +89,6 @@ test("test_subclass", () => {
 
         invoke() {
             // your code goes here
-            console.log(`MyFoo1.invoke() metadata: ${JSON.stringify(this.metadata)}`)
         }
 
         _ = serializable_field(MyFoo1, 'myprop1')
