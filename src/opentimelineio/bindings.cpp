@@ -343,8 +343,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             "name",
             &SerializableObjectWithMetadata::name,
             &SerializableObjectWithMetadata::set_name)
-        .property(
-            "metadata",
+        .function(
+            "get_metadata",
             // TODO: Should we instead return the reference? AFAIK we can't
             // to ems::select_overload<AnyDictionary&() noexcept>
             // Also, how will we override metadata? For example so.metadata?
