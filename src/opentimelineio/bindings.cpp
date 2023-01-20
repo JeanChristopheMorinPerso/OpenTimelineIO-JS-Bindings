@@ -144,35 +144,37 @@ struct KeepaliveMonitor
     KeepaliveMonitor(SerializableObject* so)
         : _so(so)
     {
-        printf("Constructing KeepaliveMonitor for %s\n", typeid(*so).name());
+        // printf("Constructing KeepaliveMonitor for %s\n", typeid(*so).name());
     }
 
     void monitor()
     {
-        printf("KeepaliveMonitor::monitor\n");
+        // printf("KeepaliveMonitor::monitor\n");
         if (_so->current_ref_count() > 1)
         {
-            printf("KeepaliveMonitor::monitor: current_ref_count > 1\n");
+            // printf("KeepaliveMonitor::monitor: current_ref_count > 1\n");
             if (!_keep_alive)
             {
-                printf(
-                    "KeepaliveMonitor::monitor: _keep_alive is empty, setting it\n");
+                // printf(
+                //     "KeepaliveMonitor::monitor: _keep_alive is empty, setting it\n");
                 _keep_alive = ems::val(_so);
+                // printf(
+                //     "KeepaliveMonitor::monitor: Successfully set _keep_alive\n");
             }
         }
         else
         {
-            printf("KeepaliveMonitor::monitor: current_ref_count < 1\n");
+            // printf("KeepaliveMonitor::monitor: current_ref_count < 1\n");
             // Note that ems::val works with ! only. SO double negate to get the truthy value.
             if (!!_keep_alive)
             {
-                printf(
-                    "KeepaliveMonitor::monitor: _keep_alive is truthy, trying to set to to undefined (clearing)\n");
+                // printf(
+                //     "KeepaliveMonitor::monitor: _keep_alive is truthy, trying to set to to undefined (clearing)\n");
                 _keep_alive =
                     ems::val::undefined(); // this could cause destruction
             }
         }
-        printf("KeepaliveMonitor::monitor: end\n");
+        // printf("KeepaliveMonitor::monitor: end\n");
     }
 };
 
@@ -181,10 +183,10 @@ install_external_keepalive_monitor(SerializableObject* so, bool apply_now)
 {
     KeepaliveMonitor m{ so };
     using namespace std::placeholders;
-    printf(
-        "Install external keep alive for %p: apply now is %d\n",
-        so,
-        apply_now);
+    // printf(
+    //     "Install external keep alive for %p: apply now is %d\n",
+    //     so,
+    //     apply_now);
     so->install_external_keepalive_monitor(
         std::bind(&KeepaliveMonitor::monitor, m),
         apply_now);
@@ -197,13 +199,13 @@ struct managing_ptr
     managing_ptr()
         : _retainer(nullptr)
     {
-        printf("Created managing_ptr (nullptr)\n");
+        // printf("Created managing_ptr (nullptr)\n");
     }
 
     explicit managing_ptr(T* ptr)
         : _retainer(ptr)
     {
-        printf("Created managing_ptr\n");
+        // printf("Created managing_ptr\n");
         install_external_keepalive_monitor(ptr, false);
     }
 
