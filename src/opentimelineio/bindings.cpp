@@ -252,7 +252,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
 
     ems::class_<SerializableObject>("SerializableObject")
         .smart_ptr_constructor(
-            "SerializableObjectPtr",
+            "SerializableObject",
             &make_managing_ptr<SerializableObject>)
         .allow_subclass<
             SerializableObjectWrapper,
@@ -344,7 +344,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         // it's like usual, but we need to return a "managing_ptr" instead of the usual raw pointer
         // to the object. This last bit was figured out by me, all by myself.
         .smart_ptr<managing_ptr<SerializableObjectWithMetadata>>(
-            "SerializableObjectWithMetadataPtr")
+            "SerializableObjectWithMetadata")
         .constructor(&make_managing_ptr<SerializableObjectWithMetadata>)
         .constructor(
             &make_managing_ptr<SerializableObjectWithMetadata, std::string>)
@@ -389,7 +389,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ADD_TO_STRING_TAG_PROPERTY(SerializableObjectWithMetadata);
 
     ems::class_<Marker, ems::base<SerializableObjectWithMetadata>>("Marker")
-        .smart_ptr<managing_ptr<Marker>>("MarkerPtr")
+        .smart_ptr<managing_ptr<Marker>>("Marker")
         .constructor(&make_managing_ptr<Marker>)
         .constructor(&make_managing_ptr<Marker, std::string>)
         .constructor(&make_managing_ptr<Marker, std::string, TimeRange>)
@@ -443,7 +443,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
 
     ems::class_<Composable, ems::base<SerializableObjectWithMetadata>>(
         "Composable")
-        .smart_ptr<managing_ptr<Composable>>("ComposablePtr")
+        .smart_ptr<managing_ptr<Composable>>("Composable")
         .constructor(&make_managing_ptr<Composable>)
         .constructor(&make_managing_ptr<Composable, std::string>)
         .constructor(ems::optional_override(
