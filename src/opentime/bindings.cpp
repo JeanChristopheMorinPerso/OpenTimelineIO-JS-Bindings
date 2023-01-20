@@ -10,6 +10,7 @@
 #include <opentime/timeRange.h>
 #include <opentime/timeTransform.h>
 
+#include "common_utils.h"
 #include "exceptions.h"
 
 namespace ems = emscripten;
@@ -29,15 +30,6 @@ string_printf(char const* format, Args... args)
     std::unique_ptr<char[]> buf(new char[size]);
     std::snprintf(buf.get(), size, format, args...);
     return std::string(buf.get());
-}
-
-std::string
-opentime_js_string(RationalTime rt)
-{
-    return string_printf(
-        "RationalTime(value=%g, rate=%g)",
-        rt.value(),
-        rt.rate());
 }
 
 namespace {
@@ -73,19 +65,6 @@ EMSCRIPTEN_BINDINGS(opentime)
         .function("is_invalid_time", &RationalTime::is_invalid_time)
         .property("value", &RationalTime::value)
         .property("rate", &RationalTime::rate)
-        .function("toString", &opentime_js_string)
-        .function("valueOf", ems::optional_override([](RationalTime& rt) {
-                      // This is what RationalTime class does internally when comparing
-                      // rational times.
-                      return rt.value() / rt.rate();
-                  }))
-        .function(
-            "toPrimitive",
-            ems::optional_override([](RationalTime& rt, std::string hint) {
-                // This is what RationalTime class does internally when comparing
-                // rational times.
-                return rt.value() / rt.rate();
-            }))
         .function(
             "rescaled_to",
             ems::select_overload<RationalTime(double) const>(
@@ -172,6 +151,8 @@ EMSCRIPTEN_BINDINGS(opentime)
                     ErrorStatusConverter());
             }));
 
+    ADD_TO_STRING_TAG_PROPERTY(RationalTime);
+
     ems::class_<TimeRange>("TimeRange")
         // TODO: Match Python constructor logic?
         .constructor()
@@ -179,21 +160,6 @@ EMSCRIPTEN_BINDINGS(opentime)
         .constructor<RationalTime, RationalTime>()
         .property("start_time", &TimeRange::start_time)
         .property("duration", &TimeRange::duration)
-        .function("toString", ems::optional_override([](TimeRange& tr) {
-                      return string_printf(
-                          "TimeRange(start_time=%s, end_time=%s)",
-                          opentime_js_string(tr.start_time()).c_str(),
-                          opentime_js_string(tr.duration()).c_str());
-                  }))
-        // TODO: Implement valueOf and toPrimitive to support comparisons
-        // .function("valueOf", ems::optional_override([](TimeRange& rt) {
-        //               todo
-        //           }))
-        // .function(
-        //     "toPrimitive",
-        //     ems::optional_override([](TimeRange& rt, std::string hint) {
-        //         todo
-        //     }))
         .function("end_time_inclusive", &TimeRange::end_time_inclusive)
         .function("duration_extended_by", &TimeRange::duration_extended_by)
         .function("extended_by", &TimeRange::extended_by)
@@ -254,6 +220,8 @@ EMSCRIPTEN_BINDINGS(opentime)
             "range_from_start_end_time_inclusive",
             &TimeRange::range_from_start_end_time_inclusive);
 
+    ADD_TO_STRING_TAG_PROPERTY(TimeRange);
+
     ems::class_<TimeTransform>("TimeTransform")
         .constructor<>()
         .constructor<RationalTime>()
@@ -262,13 +230,6 @@ EMSCRIPTEN_BINDINGS(opentime)
         .property("offset", &TimeTransform::offset)
         .property("scale", &TimeTransform::scale)
         .property("rate", &TimeTransform::rate)
-        .function("toString", ems::optional_override([](TimeTransform& tt) {
-                      return string_printf(
-                          "TimeTransform(offset=%s, scale=%g, rate=%g)",
-                          opentime_js_string(tt.offset()).c_str(),
-                          tt.scale(),
-                          tt.rate());
-                  }))
         // TODO: Implement valueOf and toPrimitive to support comparisons
         .function(
             "applied_to",
@@ -282,4 +243,6 @@ EMSCRIPTEN_BINDINGS(opentime)
             "applied_to",
             ems::select_overload<RationalTime(RationalTime) const>(
                 &TimeTransform::applied_to));
+
+    ADD_TO_STRING_TAG_PROPERTY(TimeTransform);
 }

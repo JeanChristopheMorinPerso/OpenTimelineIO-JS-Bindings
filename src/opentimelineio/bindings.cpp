@@ -38,6 +38,7 @@
 #include <opentimelineio/typeRegistry.h>
 #include <opentimelineio/unknownSchema.h>
 
+#include "common_utils.h"
 #include "errorStatusHandler.h"
 #include "js_anyDictionary.h"
 #include "utils.h"
@@ -323,12 +324,16 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         .function("schema_version", &SerializableObject::schema_version)
         .property("is_unknown_schema", &SerializableObject::is_unknown_schema);
 
+    ADD_TO_STRING_TAG_PROPERTY(SerializableObject);
+
     ems::class_<UnknownSchema, ems::base<SerializableObject>>("UnknownSchema")
         .constructor<std::string, int>()
         .property("original_schema_name", &UnknownSchema::original_schema_name)
         .property(
             "original_schema_version",
             &UnknownSchema::original_schema_version);
+
+    ADD_TO_STRING_TAG_PROPERTY(UnknownSchema);
 
     ems::class_<SerializableObjectWithMetadata, ems::base<SerializableObject>>(
         "SerializableObjectWithMetadata")
@@ -381,6 +386,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                                  + std::to_string(so.metadata().size()) + "\n";
             }));
 
+    ADD_TO_STRING_TAG_PROPERTY(SerializableObjectWithMetadata);
+
     ems::class_<Marker, ems::base<SerializableObjectWithMetadata>>("Marker")
         .smart_ptr<managing_ptr<Marker>>("MarkerPtr")
         .constructor(&make_managing_ptr<Marker>)
@@ -401,8 +408,11 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             &Marker::marked_range,
             &Marker::set_marked_range);
 
+    ADD_TO_STRING_TAG_PROPERTY(Marker);
+
     // TODO: Should this be an enum or maybe something else?
     ems::class_<Marker::Color>("MarkerColor");
+    ADD_TO_STRING_TAG_PROPERTY(MarkerColor);
 
     // TODO: Implement
     ems::class_<
@@ -429,6 +439,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                     js_map_to_cpp(metadata));
             }));
 
+    ADD_TO_STRING_TAG_PROPERTY(SerializableCollection);
+
     ems::class_<Composable, ems::base<SerializableObjectWithMetadata>>(
         "Composable")
         .smart_ptr<managing_ptr<Composable>>("ComposablePtr")
@@ -443,8 +455,11 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         .function("function", &Composable::visible)
         .function("overlapping", &Composable::overlapping);
 
+    ADD_TO_STRING_TAG_PROPERTY(Composable);
+
     // TODO: Implement
     ems::class_<Item, ems::base<Composable>>("Item");
+    ADD_TO_STRING_TAG_PROPERTY(Item);
 
     ems::class_<Transition, ems::base<Composable>>("Transition")
         .constructor(
@@ -484,11 +499,15 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                 return t.trimmed_range_in_parent(ErrorStatusHandler());
             }));
 
+    ADD_TO_STRING_TAG_PROPERTY(Transition);
+
     // TODO: Implement
     ems::class_<Transition::Type>("TransitionType");
+    ADD_TO_STRING_TAG_PROPERTY(TransitionType);
 
     // TODO: Implement
     ems::class_<Gap, ems::base<Item>>("Gap");
+    ADD_TO_STRING_TAG_PROPERTY(Gap);
 
     // TODO: Test MediaReference as input
     ems::class_<Clip, ems::base<Item>>("Clip")
@@ -542,6 +561,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                         ErrorStatusHandler());
                 }),
             ems::allow_raw_pointers());
+    ADD_TO_STRING_TAG_PROPERTY(Clip);
 
     // TODO: Implement
     ems::class_<Composition, ems::base<Item>>("Composition")
@@ -570,6 +590,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                 return l;
             }));
 
+    ADD_TO_STRING_TAG_PROPERTY(Composition);
+
     ems::enum_<Track::NeighborGapPolicy>("TrackNeighborGapPolicy")
         .value(
             "around_transitions",
@@ -578,6 +600,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
 
     // TODO: Implement
     ems::class_<Track::Kind>("TrackKind");
+    ADD_TO_STRING_TAG_PROPERTY(TrackKind);
 
     // TODO: Implement
     ems::class_<Track, ems::base<Composition>>("Track")
@@ -608,6 +631,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                 return result;
             }));
 
+    ADD_TO_STRING_TAG_PROPERTY(Track);
+
 
     // TODO: Implement
     ems::class_<Stack, ems::base<Composition>>("Stack")
@@ -630,9 +655,13 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                 return s;
             }));
 
+    ADD_TO_STRING_TAG_PROPERTY(Stack);
+
     // TODO: Implement
     ems::class_<Timeline, ems::base<SerializableObjectWithMetadata>>(
         "Timeline");
+
+    ADD_TO_STRING_TAG_PROPERTY(Timeline);
 
     ems::class_<Effect, ems::base<SerializableObjectWithMetadata>>("Effect")
         .constructor<>()
@@ -648,6 +677,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             &Effect::effect_name,
             &Effect::set_effect_name);
 
+    ADD_TO_STRING_TAG_PROPERTY(Effect);
+
     ems::class_<TimeEffect, ems::base<Effect>>("TimeEffect")
         .constructor<>()
         .constructor<std::string>()
@@ -657,6 +688,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                                                ems::val           metadata) {
             return new TimeEffect(name, effect_name, js_map_to_cpp(metadata));
         }));
+
+    ADD_TO_STRING_TAG_PROPERTY(TimeEffect);
 
     ems::class_<LinearTimeWarp, ems::base<TimeEffect>>("LinearTimeWarp")
         .constructor<>()
@@ -678,6 +711,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             &LinearTimeWarp::time_scalar,
             &LinearTimeWarp::set_time_scalar);
 
+    ADD_TO_STRING_TAG_PROPERTY(LinearTimeWarp);
+
     ems::class_<FreezeFrame, ems::base<LinearTimeWarp>>("FreezeFrame")
         .constructor<>()
         .constructor<std::string>()
@@ -685,6 +720,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             [](std::string const& name, ems::val metadata) {
                 return new FreezeFrame(name, js_map_to_cpp(metadata));
             }));
+
+    ADD_TO_STRING_TAG_PROPERTY(FreezeFrame);
 
     ems::class_<MediaReference, ems::base<SerializableObjectWithMetadata>>(
         "MediaReference")
@@ -721,6 +758,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         .property(
             "is_missing_reference",
             &MediaReference::is_missing_reference);
+
+    ADD_TO_STRING_TAG_PROPERTY(MediaReference);
 
     ems::class_<GeneratorReference, ems::base<MediaReference>>(
         "GeneratorReference")
@@ -777,6 +816,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             ems::select_overload<AnyDictionary() const>(
                 &GeneratorReference::parameters));
 
+    ADD_TO_STRING_TAG_PROPERTY(GeneratorReference);
+
     ems::class_<MissingReference, ems::base<MediaReference>>("MissingReference")
         .constructor<>()
         .constructor<std::string>()
@@ -800,6 +841,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                     js_map_to_cpp(metadata),
                     available_image_bounds);
             }));
+
+    ADD_TO_STRING_TAG_PROPERTY(MissingReference);
 
     ems::class_<ExternalReference, ems::base<MediaReference>>(
         "ExternalReference")
@@ -829,6 +872,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             "target_url",
             &ExternalReference::target_url,
             &ExternalReference::set_target_url);
+
+    ADD_TO_STRING_TAG_PROPERTY(ExternalReference);
 
     ems::enum_<ImageSequenceReference::MissingFramePolicy>("MissingFramePolicy")
         .value("error", ImageSequenceReference::MissingFramePolicy::error)
@@ -921,6 +966,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                         image_number,
                         ErrorStatusHandler());
                 }));
+
+    ADD_TO_STRING_TAG_PROPERTY(ImageSequenceReference);
 
     // TODO: Test
     ems::function(
