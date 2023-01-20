@@ -267,8 +267,11 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                 old_fields                = dynamic_fields;
             }))
         .function("is_equivalent_to", &SerializableObject::is_equivalent_to)
-        // Don't override Emscripten's own clone method. This can cause exceptions like:
-        // TypeError: Class constructor MyFoo cannot be invoked without 'new'
+        // Don't override Emscripten's own clone method. Emscripten's clone
+        // is not a copy, it creates a references which points to the same C++ object.
+        // clone is similar to when compiling OTIO with INSTANCING_SUPPORT I guess? Not sure.
+        // TODO: This crashes. Stacktrace can be seen when cimpiling in Debug mode
+        // and running the tests.
         .function(
             "clone_otio",
             ems::optional_override([](SerializableObject* so) {
@@ -401,6 +404,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     // TODO: Should this be an enum or maybe something else?
     ems::class_<Marker::Color>("MarkerColor");
 
+    // TODO: Implement
     ems::class_<
         SerializableCollection,
         ems::base<SerializableObjectWithMetadata>>("SerializableCollection")
@@ -573,6 +577,9 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         .value("never", Track::NeighborGapPolicy::never);
 
     // TODO: Implement
+    ems::class_<Track::Kind>("TrackKind");
+
+    // TODO: Implement
     ems::class_<Track, ems::base<Composition>>("Track")
         .constructor<>()
         .constructor<std::string>()
@@ -601,8 +608,6 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                 return result;
             }));
 
-    // TODO: Implement
-    ems::class_<Track::Kind>("TrackKind");
 
     // TODO: Implement
     ems::class_<Stack, ems::base<Composition>>("Stack")
@@ -1076,6 +1081,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             return any_to_js(result, true);
         }));
 
+    // TODO: Bind std::unordered_map
     ems::function("type_version_map", ems::optional_override([]() {
                       schema_version_map tmp;
                       TypeRegistry::instance().type_version_map(tmp);
