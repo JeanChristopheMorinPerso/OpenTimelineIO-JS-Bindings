@@ -32,7 +32,6 @@ test("test_serialize_time", () => {
 
 // TODO: Add more metadata (cover all possible types)
 test("test_metadata", () => {
-test("test_cons", () => {
     const so = new opentimelineio.SerializableObjectWithMetadata()
     const met = so.get_metadata()
     met['foo'] = 'bar'
