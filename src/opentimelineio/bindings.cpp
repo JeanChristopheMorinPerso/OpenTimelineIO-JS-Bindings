@@ -137,84 +137,6 @@ REGISTER_WRAPPER(
     SerializableObjectWithMetadata,
     SerializableObjectWithMetadataWrapper);
 
-struct KeepaliveMonitor
-{
-    SerializableObject* _so;
-    ems::val            _keep_alive;
-
-    KeepaliveMonitor(SerializableObject* so)
-        : _so(so)
-    {
-        // printf("Constructing KeepaliveMonitor for %s\n", typeid(*so).name());
-    }
-
-    void monitor()
-    {
-        // printf("KeepaliveMonitor::monitor\n");
-        if (_so->current_ref_count() > 1)
-        {
-            // printf("KeepaliveMonitor::monitor: current_ref_count > 1\n");
-            if (!_keep_alive)
-            {
-                // printf(
-                //     "KeepaliveMonitor::monitor: _keep_alive is empty, setting it\n");
-                _keep_alive = ems::val(_so);
-                // printf(
-                //     "KeepaliveMonitor::monitor: Successfully set _keep_alive\n");
-            }
-        }
-        else
-        {
-            // printf("KeepaliveMonitor::monitor: current_ref_count < 1\n");
-            // Note that ems::val works with ! only. SO double negate to get the truthy value.
-            if (!!_keep_alive)
-            {
-                // printf(
-                //     "KeepaliveMonitor::monitor: _keep_alive is truthy, trying to set to to undefined (clearing)\n");
-                _keep_alive =
-                    ems::val::undefined(); // this could cause destruction
-            }
-        }
-        // printf("KeepaliveMonitor::monitor: end\n");
-    }
-};
-
-void
-install_external_keepalive_monitor(SerializableObject* so, bool apply_now)
-{
-    KeepaliveMonitor m{ so };
-    using namespace std::placeholders;
-    // printf(
-    //     "Install external keep alive for %p: apply now is %d\n",
-    //     so,
-    //     apply_now);
-    so->install_external_keepalive_monitor(
-        std::bind(&KeepaliveMonitor::monitor, m),
-        apply_now);
-}
-
-template <typename T>
-struct managing_ptr
-{
-
-    managing_ptr()
-        : _retainer(nullptr)
-    {
-        // printf("Created managing_ptr (nullptr)\n");
-    }
-
-    explicit managing_ptr(T* ptr)
-        : _retainer(ptr)
-    {
-        // printf("Created managing_ptr\n");
-        install_external_keepalive_monitor(ptr, false);
-    }
-
-    T* get() const { return _retainer.value; }
-
-    SerializableObject::Retainer<T> _retainer;
-};
-
 namespace emscripten {
 template <typename T>
 struct smart_ptr_trait<managing_ptr<T>>
@@ -246,10 +168,40 @@ make_managing_ptr(Targs&&... args)
     return managing_ptr<T>(new T(std::forward<Targs>(args)...));
 }
 
+template <typename CONTAINER>
+class ContainerIterator
+{
+public:
+    ContainerIterator(CONTAINER* container)
+        : _container(container)
+        , _it(0)
+    {}
+
+    ContainerIterator* iter() { return this; }
+
+    ems::val next()
+    {
+        printf("ContainerIterator::next start");
+        ems::val result = ems::val::object();
+        if (_it == _container->children().size())
+        {
+            result.set("done", true);
+            printf("ContainerIterator::next done");
+            return result;
+        }
+
+        result.set("value", _container->children()[_it++].value);
+        printf("ContainerIterator::next returning value");
+        return result;
+    }
+
+private:
+    CONTAINER* _container;
+    size_t     _it;
+};
+
 EMSCRIPTEN_BINDINGS(opentimelineio)
 {
-    ems::register_vector<SerializableObject*>("SOVector");
-
     ems::class_<SerializableObject>("SerializableObject")
         .smart_ptr_constructor(
             "SerializableObject",
@@ -414,21 +366,40 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::class_<Marker::Color>("MarkerColor");
     ADD_TO_STRING_TAG_PROPERTY(MarkerColor);
 
-    // TODO: Implement
+    // TODO: Use custom unmarshaling? When I tried, it wasn't even compiling.
+    ems::register_vector<SerializableObject*>("SOVector");
+
+    using SerializableCollectionIterator =
+        ContainerIterator<SerializableCollection>;
+
+    ems::class_<SerializableCollectionIterator>(
+        "SerializableCollectionIterator")
+        // .constructor()
+        .function(
+            "@@iterator",
+            &SerializableCollectionIterator::iter,
+            ems::allow_raw_pointers())
+        .function("next", &SerializableCollectionIterator::next);
+
+    // TODO: Implement and continue tests.
     ems::class_<
         SerializableCollection,
         ems::base<SerializableObjectWithMetadata>>("SerializableCollection")
-
-        .constructor<>()
-        .constructor<std::string>()
-        .constructor(ems::optional_override(
-            [](std::string const&               name,
-               std::vector<SerializableObject*> children) {
-                return new SerializableCollection(
-                    name,
-                    children,
-                    AnyDictionary());
-            }))
+        .smart_ptr<managing_ptr<SerializableCollection>>(
+            "SerializableCollection")
+        .constructor(&make_managing_ptr<SerializableCollection>)
+        .constructor(&make_managing_ptr<SerializableCollection, std::string>)
+        .constructor(
+            ems::optional_override(
+                [](std::string const&               name,
+                   std::vector<SerializableObject*> children) {
+                    return managing_ptr<SerializableCollection>(
+                        new SerializableCollection(
+                            name,
+                            children,
+                            AnyDictionary()));
+                }),
+            ems::allow_raw_pointers())
         .constructor(
             ems::optional_override([](std::string const&               name,
                                       std::vector<SerializableObject*> children,
@@ -437,7 +408,39 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                     name,
                     children,
                     js_map_to_cpp(metadata));
-            }));
+            }))
+        .property(
+            "length",
+            ems::optional_override([](SerializableCollection const& sc) {
+                return sc.children().size();
+            }))
+        .function(
+            "@@iterator",
+            ems::optional_override([](SerializableCollection* sc) {
+                return new SerializableCollectionIterator(sc);
+            }),
+            ems::allow_raw_pointers())
+        .function(
+            "find_clips",
+            ems::optional_override([](SerializableCollection* sc) {
+                return find_clips(sc, nullopt, false);
+            }),
+            ems::allow_raw_pointers())
+        .function(
+            "find_clips",
+            ems::optional_override(
+                [](SerializableCollection* sc, TimeRange const& search_range) {
+                    return find_clips(sc, search_range, false);
+                }),
+            ems::allow_raw_pointers())
+        .function(
+            "find_clips",
+            ems::optional_override([](SerializableCollection* sc,
+                                      TimeRange const&        search_range,
+                                      bool                    shallow_search) {
+                return find_clips(sc, nullopt, shallow_search);
+            }),
+            ems::allow_raw_pointers());
 
     ADD_TO_STRING_TAG_PROPERTY(SerializableCollection);
 
