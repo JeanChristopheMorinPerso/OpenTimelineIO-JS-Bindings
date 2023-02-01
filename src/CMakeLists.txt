@@ -87,6 +87,7 @@ target_include_directories(opentime-js
 add_custom_target(opentime-ts
     ALL
     DEPENDS opentime-js
+    COMMAND ${CMAKE_COMMAND} -E echo "Creating TypeScript declarations $<TARGET_FILE_DIR:opentime-js>/$<TARGET_FILE_BASE_NAME:opentime-js>.d.ts"
     COMMAND npx tsembind $<TARGET_FILE:opentime-js> > $<TARGET_FILE_DIR:opentime-js>/$<TARGET_FILE_BASE_NAME:opentime-js>.d.ts
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
@@ -126,6 +127,7 @@ target_include_directories(opentimelineio-js
 add_custom_target(opentimelineio-ts
     ALL
     DEPENDS opentimelineio-js
+    COMMAND ${CMAKE_COMMAND} -E echo "Creating TypeScript declarations $<TARGET_FILE_DIR:opentimelineio-js>/$<TARGET_FILE_BASE_NAME:opentimelineio-js>.d.ts"
     COMMAND npx tsembind $<TARGET_FILE:opentimelineio-js> > $<TARGET_FILE_DIR:opentimelineio-js>/$<TARGET_FILE_BASE_NAME:opentimelineio-js>.d.ts
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
