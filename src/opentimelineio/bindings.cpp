@@ -514,13 +514,35 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
 
     // TODO: Test MediaReference as input
     ems::class_<Clip, ems::base<Item>>("Clip")
+        .smart_ptr<managing_ptr<Clip>>("Clip")
+        .constructor(&make_managing_ptr<Clip>)
+        .constructor(&make_managing_ptr<Clip, std::string>)
+        .constructor(make_managing_ptr<Clip, std::string, MediaReference*>)
+        .constructor(&make_managing_ptr<
+                     Clip,
+                     std::string,
+                     MediaReference*,
+                     nonstd::optional<TimeRange>>)
+        .constructor(
+            ems::optional_override([](std::string const& name,
+                                      MediaReference*    media_reference,
+                                      nonstd::optional<TimeRange> source_range,
+                                      ems::val                    metadata) {
+                return managing_ptr<Clip>(new Clip(
+                    name,
+                    media_reference,
+                    source_range,
+                    js_map_to_cpp(metadata),
+                    Clip::default_media_key));
+            }),
+            ems::allow_raw_pointers())
         .constructor(
             ems::optional_override(
-                [](std::string const& name,
-                   MediaReference*    media_reference,
-                   TimeRange          source_range,
-                   ems::val           metadata,
-                   std::string const& active_media_reference) {
+                [](std::string const&          name,
+                   MediaReference*             media_reference,
+                   nonstd::optional<TimeRange> source_range,
+                   ems::val                    metadata,
+                   std::string const&          active_media_reference) {
                     return new Clip(
                         name,
                         media_reference,
