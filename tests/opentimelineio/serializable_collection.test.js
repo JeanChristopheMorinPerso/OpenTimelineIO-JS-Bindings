@@ -34,9 +34,8 @@ test('test_constructor', () => {
 
 test('test_iterable', () => {
     const children = [
-        new opentimelineio.SerializableObjectWithMetadata('testSO'),
-        new opentimelineio.SerializableObject(),
-        new opentimelineio.SerializableObject()
+        new opentimelineio.Clip("testClip"),
+        new opentimelineio.MissingReference()
     ]
 
     const sovec = new opentimelineio.SOVector();
@@ -45,5 +44,31 @@ test('test_iterable', () => {
     }
 
     const sc = new opentimelineio.SerializableCollection('test', sovec, { 'asd': 'dfg' })
-    expect(sc.children.get(0)).toEqual(children[0])
+    expect(sc.get_children().get(0)).toEqual(children[0])
+
+    for (const child of sc) {
+        console.log(child)
+    }
+})
+
+test.skip('test_serialize', () => {
+    const children = [
+        new opentimelineio.Clip("testClip"),
+        new opentimelineio.MissingReference()
+    ]
+
+    const sovec = new opentimelineio.SOVector();
+    for (const item of children) {
+        sovec.push_back(item)
+    }
+
+    const sc = new opentimelineio.SerializableCollection('test', sovec, { 'asd': 'dfg' })
+
+    const encoded = opentimelineio.serialize_json_to_string(sc)
+    const decoded = opentimelineio.SerializableCollection.from_json_string(encoded)
+    console.log(sc)
+    console.log(decoded)
+    expect(sc.is_equivalent_to(decoded)).toEqual(true)
+    sc.delete()
+    sovec.delete()
 })
