@@ -26,7 +26,7 @@ test('test_contructors', () => {
     expect(clip.media_reference().is_equivalent_to(mr)).toEqual(true)
 
     encoded = opentimelineio.serialize_json_to_string(clip)
-    decoded = opentimelineio.Clip.from_json_string(encoded)
+    decoded = opentimelineio.SerializableObject.from_json_string(encoded)
     expect(clip.is_equivalent_to(decoded)).toEqual(true)
     rt.delete()
     tr.delete()

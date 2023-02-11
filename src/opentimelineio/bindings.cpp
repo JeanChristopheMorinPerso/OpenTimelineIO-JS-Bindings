@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "emscripten.h"
-#include "nonstd/optional.hpp"
 #include <ImathBox.h>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
@@ -46,7 +46,6 @@
 #include "utils.h"
 
 namespace ems = emscripten;
-// using namespace opentimelineio::OPENTIMELINEIO_VERSION;
 
 REGISTER_DESTRUCTOR(OTIO_NS::SerializableObject);
 REGISTER_DESTRUCTOR(OTIO_NS::UnknownSchema);
@@ -91,7 +90,7 @@ namespace {
     // }
 
     template<typename T, typename U>
-    bool find_children(T* t, ems::val descended_from_type, nonstd::optional<OTIO_NS::TimeRange> const& search_range, bool shallow_search, std::vector<OTIO_NS::SerializableObject*>& l) {
+    bool find_children(T* t, ems::val descended_from_type, std::optional<OTIO_NS::TimeRange> const& search_range, bool shallow_search, std::vector<OTIO_NS::SerializableObject*>& l) {
         // TODO: Bad!
         if (true)
         {
@@ -104,7 +103,7 @@ namespace {
     }
 
     template<typename T>
-    std::vector<OTIO_NS::SerializableObject*> find_children(T* t, ems::val descended_from_type, nonstd::optional<OTIO_NS::TimeRange> const& search_range, bool shallow_search = false) {
+    std::vector<OTIO_NS::SerializableObject*> find_children(T* t, ems::val descended_from_type, std::optional<OTIO_NS::TimeRange> const& search_range, bool shallow_search = false) {
         std::vector<OTIO_NS::SerializableObject*> l;
         if (find_children<T, OTIO_NS::Clip>(t, descended_from_type, search_range, shallow_search, l)) ;
         else if (find_children<T, OTIO_NS::Composition>(t, descended_from_type, search_range, shallow_search, l)) ;
@@ -124,7 +123,7 @@ namespace {
     }
 
     template<typename T>
-    std::vector<OTIO_NS::SerializableObject*> find_clips(T* t, nonstd::optional<OTIO_NS::TimeRange> const& search_range, bool shallow_search = false) {
+    std::vector<OTIO_NS::SerializableObject*> find_clips(T* t, std::optional<OTIO_NS::TimeRange> const& search_range, bool shallow_search = false) {
         std::vector<OTIO_NS::SerializableObject*> l;
         for (const auto& clip : t->find_clips(ErrorStatusHandler(), search_range, shallow_search)) {
             l.push_back(clip.value);
@@ -620,13 +619,13 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                      OTIO_NS::Clip,
                      std::string,
                      OTIO_NS::MediaReference*,
-                     nonstd::optional<OTIO_NS::TimeRange>>)
+                     std::optional<OTIO_NS::TimeRange>>)
         .constructor(
             ems::optional_override(
-                [](std::string const&                   name,
-                   OTIO_NS::MediaReference*             media_reference,
-                   nonstd::optional<OTIO_NS::TimeRange> source_range,
-                   ems::val                             metadata) {
+                [](std::string const&                name,
+                   OTIO_NS::MediaReference*          media_reference,
+                   std::optional<OTIO_NS::TimeRange> source_range,
+                   ems::val                          metadata) {
                     return managing_ptr<OTIO_NS::Clip>(new OTIO_NS::Clip(
                         name,
                         media_reference,
@@ -637,11 +636,11 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             ems::allow_raw_pointers())
         .constructor(
             ems::optional_override(
-                [](std::string const&                   name,
-                   OTIO_NS::MediaReference*             media_reference,
-                   nonstd::optional<OTIO_NS::TimeRange> source_range,
-                   ems::val                             metadata,
-                   std::string const& active_media_reference) {
+                [](std::string const&                name,
+                   OTIO_NS::MediaReference*          media_reference,
+                   std::optional<OTIO_NS::TimeRange> source_range,
+                   ems::val                          metadata,
+                   std::string const&                active_media_reference) {
                     return managing_ptr<OTIO_NS::Clip>(new OTIO_NS::Clip(
                         name,
                         media_reference,

@@ -2,3 +2,5 @@ build
 emsdk
 node_modules
 install
+repros
+.vscode
