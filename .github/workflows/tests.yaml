@@ -45,6 +45,13 @@ jobs:
       - run: npm test
         name: Test
 
+      - uses: actions/upload-artifact@v3
+        name: Upload artifacts
+        with:
+          name: opentimelineio
+          path: install/
+        if: success() || failure()
+
       - uses: actions/cache/save@v3
         name: Save emscripten cache
         with:
