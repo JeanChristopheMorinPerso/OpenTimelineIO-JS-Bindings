@@ -3,6 +3,9 @@ name: tests
 on:
   push:
 
+env:
+  EM_CACHE: emscripten_cache
+
 jobs:
   test:
     name: Test
@@ -18,6 +21,16 @@ jobs:
 
       - run: make setup
         name: Setup
+
+      - run: echo "version=$(make emscripten-version)" >> $GITHUB_OUTPUT
+        id: emscripten-version
+        name: Get emscripten version
+
+      - uses: actions/cache@v3
+        name: Emscripten cache
+        with:
+          path: ${{ env.EM_CACHE }}
+          key: ${{ runner.os }}-emscripten-${{ steps.emscripten-version.outputs.version }}
 
       - run: make build
         name: Build

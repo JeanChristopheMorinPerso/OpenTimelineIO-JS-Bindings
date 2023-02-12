@@ -1,11 +1,12 @@
 .PHONY: setup build clean install
 
 BUILD_TYPE ?= Release
+EMSCRIPTEN_VERSION ?= 3.1.30
 
 setup:
 	git clone https://github.com/emscripten-core/emsdk.git
-	cd emsdk && ./emsdk install latest
-	cd emsdk && ./emsdk activate latest
+	cd emsdk && ./emsdk install $(EMSCRIPTEN_VERSION)
+	cd emsdk && ./emsdk activate $(EMSCRIPTEN_VERSION)
 	npm install
 
 build:
@@ -23,3 +24,6 @@ install:
 clean:
 	rm -rf build
 	rm -rf install
+
+emscripten-version:
+	@echo $(EMSCRIPTEN_VERSION)
