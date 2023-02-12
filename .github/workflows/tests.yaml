@@ -3,9 +3,6 @@ name: tests
 on:
   push:
 
-env:
-  EM_CACHE: emscripten_cache
-
 concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
@@ -33,11 +30,13 @@ jobs:
       - uses: actions/cache/restore@v3
         name: Restore emscripten cache
         with:
-          path: ${{ env.EM_CACHE }}
+          path: ${{ github.workspace }}/emscripten_cache
           key: ${{ runner.os }}-emscripten-${{ steps.emscripten-version.outputs.version }}
 
       - run: make build
         name: Build
+        env:
+          EM_CACHE: ${{ github.workspace }}/emscripten_cache
 
       - run: make install
         name: Install
@@ -48,6 +47,6 @@ jobs:
       - uses: actions/cache/save@v3
         name: Save emscripten cache
         with:
-          path: ${{ env.EM_CACHE }}
+          path: ${{ github.workspace }}/emscripten_cache
           key: ${{ runner.os }}-emscripten-${{ steps.emscripten-version.outputs.version }}
         if: success() || failure()
