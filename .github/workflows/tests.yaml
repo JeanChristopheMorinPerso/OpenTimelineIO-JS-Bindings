@@ -30,8 +30,8 @@ jobs:
         id: emscripten-version
         name: Get emscripten version
 
-      - uses: actions/cache@v3
-        name: Emscripten cache
+      - uses: actions/cache/restore@v3
+        name: Restore emscripten cache
         with:
           path: ${{ env.EM_CACHE }}
           key: ${{ runner.os }}-emscripten-${{ steps.emscripten-version.outputs.version }}
@@ -44,3 +44,10 @@ jobs:
 
       - run: npm test
         name: Test
+
+      - uses: actions/cache/save@v3
+        name: Save emscripten cache
+        with:
+          path: ${{ env.EM_CACHE }}
+          key: ${{ runner.os }}-emscripten-${{ steps.emscripten-version.outputs.version }}
+        if: success() || failure()
