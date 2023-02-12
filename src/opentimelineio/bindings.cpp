@@ -265,18 +265,18 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         .class_function(
             "from_json_string",
             ems::optional_override([](std::string input) {
-                return managing_ptr<OTIO_NS::SerializableObject>(
-                    OTIO_NS::SerializableObject::from_json_string(
+                auto result = OTIO_NS::SerializableObject::from_json_string(
                         input,
-                        ErrorStatusHandler()));
+                        ErrorStatusHandler());
+                return managing_ptr<OTIO_NS::SerializableObject>(result);
             }))
         .class_function(
             "from_json_file",
             ems::optional_override([](std::string file_name) {
-                return managing_ptr<OTIO_NS::SerializableObject>(
-                    OTIO_NS::SerializableObject::from_json_file(
-                        file_name,
-                        ErrorStatusHandler()));
+                auto result = OTIO_NS::SerializableObject::from_json_file(
+                    file_name,
+                    ErrorStatusHandler());
+                return managing_ptr<OTIO_NS::SerializableObject>(result);
             }))
         .function("schema_name", &OTIO_NS::SerializableObject::schema_name)
         .function(

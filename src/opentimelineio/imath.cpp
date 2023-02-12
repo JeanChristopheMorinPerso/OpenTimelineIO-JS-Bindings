@@ -49,8 +49,6 @@ _type_checked(ems::val const& rhs, char const* op)
 
 EMSCRIPTEN_BINDINGS(imath)
 {
-    auto baseTypeLowest = Imath::V2d::baseTypeLowest();
-
     ems::class_<Imath::V2d>("V2d")
         .constructor<>()
         .constructor<double>()

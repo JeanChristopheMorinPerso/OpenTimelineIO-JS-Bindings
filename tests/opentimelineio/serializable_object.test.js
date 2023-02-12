@@ -32,6 +32,35 @@ test("test_serialize_time", () => {
     expect(tt).toEqual(decoded3)
 })
 
+test("test_serialize", () => {
+    function expectError(expectedMessage, callback) {
+        try {
+            callback();
+            throw new Error('Expected function to throw!');
+        } catch (err) {
+            // console.log(err.is(lib.asm.__cpp_exception))
+            expect(err).toBeInstanceOf(WebAssembly.Exception)
+            expect(err.message[1]).toEqual(expectedMessage)
+        }
+    }
+
+    expectError("No such file or directory: non existent file", () => {
+        opentimelineio.SerializableObject.from_json_file("non existent file")
+    })
+
+    expectError("JSON parse error while reading: JSON parse error on input string: Invalid value. (line 1, column 0)", () => {
+        opentimelineio.SerializableObject.from_json_string("aasd")
+    })
+
+    expectError("JSON parse error while reading: JSON parse error on input string: The document is empty. (line 1, column 0)", () => {
+        opentimelineio.SerializableObject.from_json_string("")
+    })
+
+    expectError("type mismatch while decoding: Expected a SerializableObject*, found object of type 'opentimelineio::v1_0::AnyDictionary' instead", () => {
+        opentimelineio.SerializableObject.from_json_string("{}")
+    })
+})
+
 // TODO: Add more metadata (cover all possible types)
 test("test_metadata", () => {
     const so = new opentimelineio.SerializableObjectWithMetadata()
@@ -135,7 +164,7 @@ test("test_subclass", () => {
     instance2.to_json_string(4)
 })
 
-test("asd", () => {
+test("test_constructors", () => {
     const asd = new opentimelineio.SerializableObject();
     console.log(asd.to_json_string(4))
     console.log(asd.to_json_string(4))
