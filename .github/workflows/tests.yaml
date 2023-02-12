@@ -1,0 +1,29 @@
+name: tests
+
+on:
+  push:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 19
+
+      - run: make setup
+        name: Setup
+
+      - run: make build
+        name: Build
+
+      - run: make install
+        name: Install
+
+      - run: npm test
+        name: Test
