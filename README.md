@@ -9,16 +9,19 @@ This is still a work in progress for now, but the base is there. That is:
 
 * `SerializableObject`, `SerializableObjectWithMetadata`, ability to subclass them and
   register custom schemas from Javascripts.
+* `Composable`, `Marker`, `Clip` (partial) and `SerializableCollection` (partial).
 * Serialization and deserialization is mostly working, though it needs more work to
   cover everything.
 * `opentime` is implemented, but more work is needed on the comparison operators.
 * Imath `V2d` and `Box2d` are also available. We still can't access the `x` property
-  of v2d` for technical reasons.
+  of `v2d` for technical reasons.
 * `AnyDictionary` is automatically converted from C++ to JS and from JS to C++.
 * `AnyVector` is a work in progress.
 * Objects lifecycle needs more work. I think some instances are "leaked" (they stey
   alive while they should get deleted).
+* `std::optional` is working.
 * Tests live in the [tests](./tests) directory.
+* Tests are run automatically on every push using GitHub Actions.
 
 ## Build
 
@@ -46,3 +49,4 @@ still needs to be done. Other TODOs are bellow:
 * Support toString methods?
 * Go through skipped tests.
 * Implement an "equal" + "notEqual" method on everything?
+* Class functions are not available on sub-classes (https://github.com/emscripten-core/emscripten/issues/18722).
