@@ -30,7 +30,8 @@ string(APPEND JS_LINK_FLAGS " -I${CMAKE_SOURCE_DIR}/deps/OpenTimelineIO/src \
     -sEXPORT_NAME='OpenTimelineIO' \
     -sMEMORY_GROWTH_LINEAR_STEP=32MB \
     -sALLOW_MEMORY_GROWTH=1 \
-    -sFORCE_FILESYSTEM=1 "
+    -sFORCE_FILESYSTEM=1 \
+    --pre-js=${CMAKE_CURRENT_SOURCE_DIR}/post.js "
 )
 
 # Support exceptions
