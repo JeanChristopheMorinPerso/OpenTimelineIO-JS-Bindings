@@ -1,0 +1,33 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true,
+        "commonjs": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": "latest",
+        "sourceType": "module"
+    },
+    "ignorePatterns": [
+        "deps/**/*",
+        "install/**/*",
+        "build/**/*",
+        "emsdk/**/*",
+        "repros/**/*"
+    ],
+    "rules": {
+        "indent": [
+            "error",
+            4
+        ],
+        "linebreak-style": [
+            "error",
+            "unix"
+        ],
+        "quotes": [
+            "error",
+            "single"
+        ]
+    }
+}

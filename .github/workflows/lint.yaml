@@ -1,0 +1,37 @@
+name: lint
+
+on:
+  push:
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  cpp:
+    name: cpp
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: jidicula/clang-format-action@v4.10.2
+        name: clang-format
+        with:
+          clang-format-version: "15"
+          check-path: "src"
+
+  js:
+    name: js
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 19
+
+      - run: npm install
+        name: Install dependencies
+
+      - run: npx eslint .
+        name: ESLint

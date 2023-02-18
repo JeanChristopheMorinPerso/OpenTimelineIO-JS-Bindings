@@ -34,10 +34,10 @@ test('create', () => {
 });
 
 test('string', () => {
-    t1 = new lib.RationalTime(0.0, 2.0)
+    const t1 = new lib.RationalTime(0.0, 2.0)
     expect(t1.toString()).toEqual('RationalTime(value=0, rate=2)')
 
-    t2 = new lib.RationalTime(10.5, 24.8)
+    const t2 = new lib.RationalTime(10.5, 24.8)
     expect(t2.toString()).toEqual('RationalTime(value=10.5, rate=24.8)')
 })
 
@@ -51,13 +51,15 @@ test('equality', () => {
 });
 
 test('inequality', () => {
-    t1 = new lib.RationalTime(30.2)
-    t2 = new lib.RationalTime(33.2)
+    const t1 = new lib.RationalTime(30.2)
+    const t2 = new lib.RationalTime(33.2)
     expect(t1 !== t2).toBe(true)
     expect(t1 != t2).toBe(true)
 
+    // console.log(t1.toPrimitive('number'), t1.valueOf())
     const t3 = new lib.RationalTime(30.2)
-    expect(t3 !== t1).toBe(false)
+    // console.log(t3.toPrimitive('number'), t3.valueOf())
+    expect(t1 === t3).toBe(true)
 })
 //     def test_inequality(self):
 //         t1 = otio.opentime.RationalTime(30.2)
@@ -70,8 +72,8 @@ test('inequality', () => {
 //         self.assertFalse(t1 != t3)
 
 test('comparison', () => {
-    t1 = new lib.RationalTime(15.2)
-    t2 = new lib.RationalTime(15.6)
+    const t1 = new lib.RationalTime(15.2)
+    let t2 = new lib.RationalTime(15.6)
     console.log(t1.valueOf())
     expect(t1 < t2).toBe(true)
     expect(t1 <= t2).toBe(true)
@@ -79,7 +81,7 @@ test('comparison', () => {
     expect(t1 >= t2).toBe(false)
 
     // Ensure the equality case of the comparisons works correctly
-    t3 = new lib.RationalTime(30.4, 2)
+    const t3 = new lib.RationalTime(30.4, 2)
     expect(t1 <= t3).toBe(true)
     expect(t1 >= t3).toBe(true)
     expect(t3 <= t1).toBe(true)

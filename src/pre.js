@@ -1,3 +1,4 @@
+/* global Module */
 Module.onRuntimeInitialized = function () {
     /**
     * Create a property (getter + setter) that OTIO will be able

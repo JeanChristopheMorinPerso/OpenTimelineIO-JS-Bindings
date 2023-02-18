@@ -35,7 +35,7 @@ test('test_constructor', () => {
 
 test('test_iterable', () => {
     const children = [
-        new opentimelineio.Clip("testClip"),
+        new opentimelineio.Clip('testClip'),
         new opentimelineio.MissingReference()
     ]
 
@@ -54,7 +54,7 @@ test('test_iterable', () => {
 
 test.skip('test_serialize', () => {
     const children = [
-        new opentimelineio.Clip("testClip"),
+        new opentimelineio.Clip('testClip'),
         new opentimelineio.MissingReference()
     ]
 

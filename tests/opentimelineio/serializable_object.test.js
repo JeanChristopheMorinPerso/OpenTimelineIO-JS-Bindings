@@ -14,7 +14,7 @@ beforeAll(async () => {
 
 // This can look weird, but serializatin and deserialization is part of
 // opentimelineio, not opentime.
-test("test_serialize_time", () => {
+test('test_serialize_time', () => {
     const rt = new opentimelineio.RationalTime(15, 24);
     const encoded = opentimelineio.serialize_json_to_string(rt);
     const decoded = opentimelineio.deserialize_json_from_string(encoded);
@@ -32,7 +32,7 @@ test("test_serialize_time", () => {
     expect(tt).toEqual(decoded3)
 })
 
-test("test_serialize", () => {
+test('test_serialize', () => {
     function expectError(expectedMessage, callback) {
         try {
             callback();
@@ -44,25 +44,25 @@ test("test_serialize", () => {
         }
     }
 
-    expectError("No such file or directory: non existent file", () => {
-        opentimelineio.SerializableObject.from_json_file("non existent file")
+    expectError('No such file or directory: non existent file', () => {
+        opentimelineio.SerializableObject.from_json_file('non existent file')
     })
 
-    expectError("JSON parse error while reading: JSON parse error on input string: Invalid value. (line 1, column 0)", () => {
-        opentimelineio.SerializableObject.from_json_string("aasd")
+    expectError('JSON parse error while reading: JSON parse error on input string: Invalid value. (line 1, column 0)', () => {
+        opentimelineio.SerializableObject.from_json_string('aasd')
     })
 
-    expectError("JSON parse error while reading: JSON parse error on input string: The document is empty. (line 1, column 0)", () => {
-        opentimelineio.SerializableObject.from_json_string("")
+    expectError('JSON parse error while reading: JSON parse error on input string: The document is empty. (line 1, column 0)', () => {
+        opentimelineio.SerializableObject.from_json_string('')
     })
 
-    expectError("type mismatch while decoding: Expected a SerializableObject*, found object of type 'opentimelineio::v1_0::AnyDictionary' instead", () => {
-        opentimelineio.SerializableObject.from_json_string("{}")
+    expectError('type mismatch while decoding: Expected a SerializableObject*, found object of type \'opentimelineio::v1_0::AnyDictionary\' instead', () => {
+        opentimelineio.SerializableObject.from_json_string('{}')
     })
 })
 
 // TODO: Add more metadata (cover all possible types)
-test("test_metadata", () => {
+test('test_metadata', () => {
     const so = new opentimelineio.SerializableObjectWithMetadata()
     const met = so.get_metadata()
     met['foo'] = 'bar'
@@ -72,7 +72,7 @@ test("test_metadata", () => {
     so.delete()
 })
 
-test("test_subclass", () => {
+test('test_subclass', () => {
     // TODO: Document this.
     // Also, the embind docs documents another method.This method is taken from https://github.com/emscripten-core/emscripten/issues/7200#issuecomment-442323087
 
@@ -88,8 +88,8 @@ test("test_subclass", () => {
             // your code goes here
         }
 
-        _ = opentimelineio.serializable_field(MyFoo1, 'myprop1')
-        _ = opentimelineio.serializable_field(MyFoo1, 'myprop2')
+        _ = opentimelineio.serializable_field(MyFoo1, 'myprop1') // eslint-disable-line no-undef
+        _ = opentimelineio.serializable_field(MyFoo1, 'myprop2') // eslint-disable-line no-undef, no-dupe-class-members
     }
 
     opentimelineio.register_serializable_object_type(MyFoo1, 'MyFoo1', 1)
@@ -110,7 +110,7 @@ test("test_subclass", () => {
 
     // Test using "old" class style. Note that the first argument to extend needs to match
     // the type being extended.
-    var MyFoo2 = opentimelineio.SerializableObject.extend("SerializableObject", {
+    var MyFoo2 = opentimelineio.SerializableObject.extend('SerializableObject', {
         __construct: function () {
             this.__parent.__construct.call(this);
             opentimelineio.set_type_record(this, 'MyFoo2')
@@ -132,7 +132,7 @@ test("test_subclass", () => {
     instance2.to_json_string(4)
 })
 
-test("test_constructors", () => {
+test('test_constructors', () => {
     const asd = new opentimelineio.SerializableObject();
     console.log(asd.to_json_string(4))
     console.log(asd.to_json_string(4))
@@ -145,12 +145,12 @@ test("test_constructors", () => {
     console.log(soMetadata.to_json_string(4))
     soMetadata.delete()
 
-    const soMetadata2 = new opentimelineio.SerializableObjectWithMetadata("myname")
+    const soMetadata2 = new opentimelineio.SerializableObjectWithMetadata('myname')
     console.log(soMetadata2.to_json_string(4))
     console.log(soMetadata2.to_json_string(4))
     soMetadata2.delete()
 
-    const soMetadata3 = new opentimelineio.SerializableObjectWithMetadata("myname", { myky: 'myvalue' })
+    const soMetadata3 = new opentimelineio.SerializableObjectWithMetadata('myname', { myky: 'myvalue' })
     console.log(soMetadata3.to_json_string(4))
     console.log(soMetadata3.to_json_string(4))
     soMetadata3.delete()
@@ -217,7 +217,7 @@ test.skip('test_schema_definition', () => {
             opentimelineio.set_type_record(this, 'Stuff')
         }
 
-        _ = serializable_field(FakeThing, 'foo_two')
+        _ = serializable_field(FakeThing, 'foo_two') // eslint-disable-line no-undef
     }
 
     opentimelineio.register_serializable_object_type(FakeThing, 'Stuff', 1)
