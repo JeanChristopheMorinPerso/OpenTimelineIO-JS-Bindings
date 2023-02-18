@@ -1,5 +1,4 @@
 Module.onRuntimeInitialized = function () {
-    console.log('asdasd')
     /**
     * Create a property (getter + setter) that OTIO will be able
     * to serialize/deserialize.
