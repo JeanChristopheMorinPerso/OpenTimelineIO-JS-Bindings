@@ -266,8 +266,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             "from_json_string",
             ems::optional_override([](std::string input) {
                 auto result = OTIO_NS::SerializableObject::from_json_string(
-                        input,
-                        ErrorStatusHandler());
+                    input,
+                    ErrorStatusHandler());
                 return managing_ptr<OTIO_NS::SerializableObject>(result);
             }))
         .class_function(
@@ -781,7 +781,6 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                 }));
 
     ADD_TO_STRING_TAG_PROPERTY(Track);
-
 
     // TODO: Implement
     ems::class_<OTIO_NS::Stack, ems::base<OTIO_NS::Composition>>("Stack")
