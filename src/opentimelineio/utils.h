@@ -4,13 +4,21 @@
 #ifndef JS_UTILS_H
 #define JS_UTILS_H
 
+#include <algorithm>
+#include <cstddef>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "any/any.hpp"
 #include <emscripten/val.h>
 #include <opentimelineio/any.h>
 #include <opentimelineio/anyDictionary.h>
 #include <opentimelineio/anyVector.h>
-#include <opentimelineio/optional.h>
 #include <opentimelineio/serializableObject.h>
+#include <opentimelineio/vectorIndexing.h>
+
+#include "exceptions.h"
 
 namespace ems = emscripten;
 
@@ -51,6 +59,131 @@ struct managing_ptr
     T* get() const { return _retainer.value; }
 
     OTIO_NS::SerializableObject::Retainer<T> _retainer;
+};
+
+template <typename V, typename VALUE_TYPE = typename V::value_type>
+struct JSMutableSequence : public V
+{
+    class Iterator
+    {
+    public:
+        Iterator(V& v)
+            : _v(v)
+            , _it(0)
+        {}
+
+        ems::val next()
+        {
+            ems::val result = ems::val::object();
+            if (_it == _v.size())
+            {
+                result.set("done", true);
+                return result;
+            }
+
+            result.set("value", _v[_it++].value);
+            return result;
+        }
+
+    private:
+        V&     _v;
+        size_t _it;
+    };
+
+    VALUE_TYPE
+    at(int index)
+    {
+        V& v = static_cast<V&>(*this);
+        // adjusted_vector_index allows to support nagative values.
+        index = OTIO_NS::adjusted_vector_index(index, v);
+        if (index < 0 || index >= int(v.size()))
+        {
+            throw IndexError("asd");
+        }
+
+        return v[index];
+    }
+
+    void set_item(int index, VALUE_TYPE value)
+    {
+        V& v = static_cast<V&>(*this);
+        // adjusted_vector_index allows to support nagative values.
+        index = OTIO_NS::adjusted_vector_index(index, v);
+        if (index < 0 || index >= int(v.size()))
+        {
+            throw IndexError("asd");
+        }
+        v[index] = value;
+    }
+
+    void insert(int index, VALUE_TYPE value)
+    {
+        V& v = static_cast<V&>(*this);
+        // adjusted_vector_index allows to support nagative values.
+        index = OTIO_NS::adjusted_vector_index(index, v);
+        if (size_t(index) >= v.size())
+        {
+            v.emplace_back(std::move(value));
+        }
+        else
+        {
+            v.insert(v.begin() + std::max(index, 0), std::move(value));
+        }
+    }
+
+    void push(VALUE_TYPE value)
+    {
+        V& v = static_cast<V&>(*this);
+        v.emplace_back(std::move(value));
+    }
+
+    void del_item(int index)
+    {
+        V& v = static_cast<V&>(*this);
+        if (v.empty())
+        {
+            throw IndexError("asd");
+        }
+
+        // adjusted_vector_index allows to support nagative values.
+        index = OTIO_NS::adjusted_vector_index(index, v);
+
+        if (size_t(index) >= v.size())
+        {
+            v.pop_back();
+        }
+        else
+        {
+            v.erase(v.begin() + std::max(index, 0));
+        }
+    }
+
+    int length() const { return static_cast<int>(this->size()); }
+
+    Iterator* iter() { return new Iterator(static_cast<V&>(*this)); }
+
+    static void define_js_class(std::string name)
+    {
+        typedef JSMutableSequence This;
+
+        // TODO: tsembind generates garante names with this...
+        ems::class_<This::Iterator>((name + "Iterator").c_str())
+            .function("next", &This::Iterator::next);
+
+        ems::class_<This>(name.c_str())
+            .template constructor<>()
+            .property("length", &This::length)
+            .function("at", &This::at, ems::allow_raw_pointers())
+            .function("push", &This::push, ems::allow_raw_pointers())
+            // TODO: Support concat
+            // TODO: Support entries
+            // TODO: Support includes
+            // TODO: Support indexOf
+            // TODO: Support slice
+            // TODO: Support splice
+            // TODO: Support values
+            .function("@@iterator", &This::iter, ems::allow_raw_pointers());
+    }
 };
 
 /**

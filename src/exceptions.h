@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
+#pragma once
 #include <stdexcept>
 
 struct OTIOException : public std::runtime_error

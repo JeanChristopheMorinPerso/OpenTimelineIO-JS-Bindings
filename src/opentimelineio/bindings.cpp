@@ -182,17 +182,17 @@ public:
 
     ems::val next()
     {
-        printf("ContainerIterator::next start");
+        printf("ContainerIterator::next start\n");
         ems::val result = ems::val::object();
         if (_it == _container->children().size())
         {
             result.set("done", true);
-            printf("ContainerIterator::next done");
+            printf("ContainerIterator::next done\n");
             return result;
         }
 
         result.set("value", _container->children()[_it++].value);
-        printf("ContainerIterator::next returning value");
+        printf("ContainerIterator::next returning value\n");
         return result;
     }
 
@@ -543,14 +543,107 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
 
     ADD_TO_STRING_TAG_PROPERTY(Composable);
 
-    // TODO: Implement
+    // TODO: This is not nice on the JS side.
+    ems::register_vector<OTIO_NS::Effect*>("EffectVector");
+    ems::register_vector<OTIO_NS::Marker*>("MarkerVector");
+
+    using EffectVectorProxy = JSMutableSequence<
+        std::vector<OTIO_NS::SerializableObject::Retainer<OTIO_NS::Effect>>,
+        OTIO_NS::Effect*>;
+    using MarkerVectorProxy = JSMutableSequence<
+        std::vector<OTIO_NS::SerializableObject::Retainer<OTIO_NS::Marker>>,
+        OTIO_NS::Marker*>;
+
+    EffectVectorProxy::define_js_class("EffectVectorProxy");
+    MarkerVectorProxy::define_js_class("MarkerVectorProxy");
+
     ems::class_<OTIO_NS::Item, ems::base<OTIO_NS::Composable>>("Item")
-        .constructor<>()
-        .constructor<std::string>()
+        .smart_ptr<managing_ptr<OTIO_NS::Item>>("Item")
+        .constructor(&make_managing_ptr<OTIO_NS::Item>)
+        .constructor(&make_managing_ptr<OTIO_NS::Item, std::string>)
+        .constructor(&make_managing_ptr<
+                     OTIO_NS::Item,
+                     std::string,
+                     std::optional<OTIO_NS::TimeRange>>)
+        .constructor(ems::optional_override(
+            [](std ::string const&                      name,
+               std::optional<OTIO_NS::TimeRange> const& source_range,
+               std::vector<OTIO_NS::Effect*> const&     effects) {
+                return managing_ptr<OTIO_NS::Item>(new OTIO_NS::Item(
+                    name,
+                    source_range,
+                    OTIO_NS::AnyDictionary(),
+                    effects,
+                    std::vector<OTIO_NS::Marker*>(),
+                    true));
+            }))
+        .constructor(ems::optional_override(
+            [](std ::string const&                      name,
+               std::optional<OTIO_NS::TimeRange> const& source_range,
+               std::vector<OTIO_NS::Effect*> const&     effects,
+               std::vector<OTIO_NS::Marker*> const&     markers) {
+                return managing_ptr<OTIO_NS::Item>(new OTIO_NS::Item(
+                    name,
+                    source_range,
+                    OTIO_NS::AnyDictionary(),
+                    effects,
+                    markers,
+                    true));
+            }))
+        .constructor(ems::optional_override(
+            [](std ::string const&                      name,
+               std::optional<OTIO_NS::TimeRange> const& source_range,
+               std::vector<OTIO_NS::Effect*> const&     effects,
+               std::vector<OTIO_NS::Marker*> const&     markers,
+               bool                                     enabled) {
+                return managing_ptr<OTIO_NS::Item>(new OTIO_NS::Item(
+                    name,
+                    source_range,
+                    OTIO_NS::AnyDictionary(),
+                    effects,
+                    markers,
+                    enabled));
+            }))
+        .constructor(ems::optional_override(
+            [](std ::string const&                      name,
+               std::optional<OTIO_NS::TimeRange> const& source_range,
+               std::vector<OTIO_NS::Effect*> const&     effects,
+               std::vector<OTIO_NS::Marker*> const&     markers,
+               bool                                     enabled,
+               ems::val const&                          metadata) {
+                return managing_ptr<OTIO_NS::Item>(new OTIO_NS::Item(
+                    name,
+                    source_range,
+                    js_map_to_cpp(metadata),
+                    effects,
+                    markers,
+                    enabled));
+            }))
+        .property(
+            "enabled",
+            &OTIO_NS::Item::enabled,
+            &OTIO_NS::Item::set_enabled)
         .property(
             "source_range",
             &OTIO_NS::Item::source_range,
-            &OTIO_NS::Item::set_source_range);
+            &OTIO_NS::Item::set_source_range)
+        .function(
+            "get_effects",
+            ems::optional_override([](OTIO_NS::Item const& item) {
+                return ((EffectVectorProxy*) &item.effects());
+            }),
+            ems::allow_raw_pointers())
+        .function(
+            "get_markers",
+            ems::optional_override([](OTIO_NS::Item const& item) {
+                return ((MarkerVectorProxy*) &item.markers());
+            }),
+            ems::allow_raw_pointers())
+        .function(
+            "trimmed_range",
+            ems::optional_override([](OTIO_NS::Item const& item) {
+                return item.trimmed_range(ErrorStatusHandler());
+            }));
     ADD_TO_STRING_TAG_PROPERTY(Item);
 
     ems::class_<OTIO_NS::Transition, ems::base<OTIO_NS::Composable>>(
@@ -815,16 +908,18 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::class_<
         OTIO_NS::Effect,
         ems::base<OTIO_NS::SerializableObjectWithMetadata>>("Effect")
-        .constructor<>()
-        .constructor<std::string>()
-        .constructor<std::string, std::string>()
+        .smart_ptr<managing_ptr<OTIO_NS::Effect>>("Effect")
+        .constructor(&make_managing_ptr<OTIO_NS::Effect>)
+        .constructor(&make_managing_ptr<OTIO_NS::Effect, std::string>)
+        .constructor(
+            &make_managing_ptr<OTIO_NS::Effect, std::string, std::string>)
         .constructor(ems::optional_override([](std::string const& name,
                                                std::string const& effect_name,
                                                ems::val           metadata) {
-            return new OTIO_NS::Effect(
+            return managing_ptr<OTIO_NS::Effect>(new OTIO_NS::Effect(
                 name,
                 effect_name,
-                js_map_to_cpp(metadata));
+                js_map_to_cpp(metadata)));
         }))
         .property(
             "effect_name",
