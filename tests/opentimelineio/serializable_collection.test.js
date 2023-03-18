@@ -31,6 +31,7 @@ test('test_constructor', () => {
     // TODO: Test equality of children
     expect(sc.get_metadata()).toEqual({ 'asd': 'dfg' })
     sc.delete()
+    sovec.delete()
 })
 
 test('test_iterable', () => {
@@ -45,11 +46,12 @@ test('test_iterable', () => {
     }
 
     const sc = new opentimelineio.SerializableCollection('test', sovec, { 'asd': 'dfg' })
-    expect(sc.get_children().get(0)).toEqual(children[0])
+    expect(sc.get_children().get(0).is_equivalent_to(children[0])).toEqual(true)
 
     for (const child of sc) {
         console.log(child)
     }
+    sovec.delete()
 })
 
 test.skip('test_serialize', () => {
