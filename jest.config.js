@@ -1,7 +1,7 @@
 /** @type {import('jest').Config} */
 const config = {
     testMatch: [
-        '<rootDir>/tests/**'
+        '<rootDir>/tests/**/*.test.js'
     ]
 };
 
