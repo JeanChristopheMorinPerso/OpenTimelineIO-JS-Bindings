@@ -50,6 +50,37 @@ struct ErrorStatusConverter
 };
 } // namespace
 
+template <typename T>
+T
+_type_checked(ems::val const& rhs, char const* op)
+{
+    try
+    {
+        return rhs.as<T>();
+    }
+    catch (...)
+    {
+        throw TypeError(string_printf(
+            "unsupported operand type(s) for %s: "
+            "RationalTime and %s",
+            op,
+            rhs.typeOf().as<std::string>().c_str()));
+    }
+}
+
+/**
+ * Add a comparison operator function on a JS class.
+ * @param TYPE Type of the object.
+ * @param NAME Name of the function to add
+ * @param OPERATOR C++ operator
+*/
+#define ADD_COMPARISON_OPERATOR(TYPE, NAME, OPERATOR)                          \
+    .function(                                                                 \
+        NAME,                                                                  \
+        ems::optional_override([](TYPE const& lhs, ems::val const& rhs) {      \
+            return lhs OPERATOR _type_checked<TYPE>(rhs, #OPERATOR);           \
+        }))
+
 EMSCRIPTEN_BINDINGS(opentime)
 {
 
@@ -112,15 +143,9 @@ EMSCRIPTEN_BINDINGS(opentime)
             "to_frames",
             ems::select_overload<int(double) const>(&RationalTime::to_frames))
         .function("to_seconds", &RationalTime::to_seconds)
-        .function("to_timecode", ems::optional_override([](RationalTime& rt) {
-                      return rt.to_timecode(
-                          rt.rate(),
-                          IsDropFrameRate::InferFromRate,
-                          ErrorStatusConverter());
-                  }))
         .function(
             "to_timecode",
-            ems::optional_override([](RationalTime& rt, double rate) {
+            ems::optional_override([](RationalTime const& rt) {
                 return rt.to_timecode(
                     rt.rate(),
                     IsDropFrameRate::InferFromRate,
@@ -128,9 +153,17 @@ EMSCRIPTEN_BINDINGS(opentime)
             }))
         .function(
             "to_timecode",
-            ems::optional_override([](RationalTime&   rt,
-                                      double          rate,
-                                      IsDropFrameRate drop_frame) {
+            ems::optional_override([](RationalTime const& rt, double rate) {
+                return rt.to_timecode(
+                    rate,
+                    IsDropFrameRate::InferFromRate,
+                    ErrorStatusConverter());
+            }))
+        .function(
+            "to_timecode",
+            ems::optional_override([](RationalTime const& rt,
+                                      double              rate,
+                                      IsDropFrameRate     drop_frame) {
                 return rt.to_timecode(rate, drop_frame, ErrorStatusConverter());
             }))
         .function("to_time_string", &RationalTime::to_time_string)
@@ -149,6 +182,26 @@ EMSCRIPTEN_BINDINGS(opentime)
                     timecode,
                     rate,
                     ErrorStatusConverter());
+            }))
+        // clang-format off
+        ADD_COMPARISON_OPERATOR(RationalTime, "equal", ==)
+        ADD_COMPARISON_OPERATOR(RationalTime, "notEqual", !=)
+        ADD_COMPARISON_OPERATOR(RationalTime, "lessThan", <)
+        ADD_COMPARISON_OPERATOR(RationalTime, "lessThanOrEqual", <=)
+        ADD_COMPARISON_OPERATOR(RationalTime, "greaterThan", >)
+        ADD_COMPARISON_OPERATOR(RationalTime, "greaterThanOrEqual", >=)
+        ADD_COMPARISON_OPERATOR(RationalTime, "add", +)
+        ADD_COMPARISON_OPERATOR(RationalTime, "subtract", -)
+        // clang-format on
+        .function(
+            "compoundAdd",
+            ems::optional_override([](RationalTime lhs, ems::val const& rhs) {
+                return lhs += _type_checked<RationalTime>(rhs, "+=");
+            }))
+        .function(
+            "compoundSubstract",
+            ems::optional_override([](RationalTime lhs, ems::val const& rhs) {
+                return lhs -= _type_checked<RationalTime>(rhs, "-=");
             }));
 
     ADD_TO_STRING_TAG_PROPERTY(RationalTime);
@@ -218,7 +271,11 @@ EMSCRIPTEN_BINDINGS(opentime)
             &TimeRange::range_from_start_end_time)
         .class_function(
             "range_from_start_end_time_inclusive",
-            &TimeRange::range_from_start_end_time_inclusive);
+            &TimeRange::range_from_start_end_time_inclusive)
+        // clang-format off
+        ADD_COMPARISON_OPERATOR(TimeRange, "equal", ==)
+        ADD_COMPARISON_OPERATOR(TimeRange, "notEqual", !=);
+    // clang-format on
 
     ADD_TO_STRING_TAG_PROPERTY(TimeRange);
 
@@ -242,7 +299,11 @@ EMSCRIPTEN_BINDINGS(opentime)
         .function(
             "applied_to",
             ems::select_overload<RationalTime(RationalTime) const>(
-                &TimeTransform::applied_to));
+                &TimeTransform::applied_to))
+        // clang-format off
+        ADD_COMPARISON_OPERATOR(TimeTransform, "equal", ==)
+        ADD_COMPARISON_OPERATOR(TimeTransform, "notEqual", !=);
+    // clang-format on
 
     ADD_TO_STRING_TAG_PROPERTY(TimeTransform);
 }

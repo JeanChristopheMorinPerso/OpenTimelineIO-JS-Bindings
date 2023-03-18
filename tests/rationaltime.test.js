@@ -35,10 +35,10 @@ test('create', () => {
 
 test('string', () => {
     const t1 = new lib.RationalTime(0.0, 2.0)
-    expect(t1.toString()).toEqual('RationalTime(value=0, rate=2)')
+    expect(t1.toString()).toEqual('[object RationalTime]')
 
     const t2 = new lib.RationalTime(10.5, 24.8)
-    expect(t2.toString()).toEqual('RationalTime(value=10.5, rate=24.8)')
+    expect(t2.toString()).toEqual('[object RationalTime]')
 })
 
 test('equality', () => {
@@ -53,46 +53,39 @@ test('equality', () => {
 test('inequality', () => {
     const t1 = new lib.RationalTime(30.2)
     const t2 = new lib.RationalTime(33.2)
-    expect(t1 !== t2).toBe(true)
+    expect(t1.equal(t2)).toBeFalsy()
+    expect(t1.notEqual(t2)).toBeTruthy()
     expect(t1 != t2).toBe(true)
 
     // console.log(t1.toPrimitive('number'), t1.valueOf())
     const t3 = new lib.RationalTime(30.2)
     // console.log(t3.toPrimitive('number'), t3.valueOf())
-    expect(t1 === t3).toBe(true)
+    expect(t1.equal(t3)).toBe(true)
+    expect(t1.notEqual(t3)).toBeFalsy()
 })
-//     def test_inequality(self):
-//         t1 = otio.opentime.RationalTime(30.2)
-//         self.assertEqual(t1, t1)
-//         t2 = otio.opentime.RationalTime(33.2)
-//         self.assertTrue(t1 is not t2)
-//         self.assertNotEqual(t1, t2)
-//         t3 = otio.opentime.RationalTime(30.2)
-//         self.assertTrue(t1 is not t3)
-//         self.assertFalse(t1 != t3)
 
 test('comparison', () => {
     const t1 = new lib.RationalTime(15.2)
     let t2 = new lib.RationalTime(15.6)
     console.log(t1.valueOf())
-    expect(t1 < t2).toBe(true)
-    expect(t1 <= t2).toBe(true)
-    expect(t1 > t2).toBe(false)
-    expect(t1 >= t2).toBe(false)
+    expect(t1.lessThan(t2)).toBeTruthy()
+    expect(t1.lessThanOrEqual(t2)).toBeTruthy()
+    expect(t1.greaterThan(t1)).toBeFalsy()
+    expect(t1.greaterThanOrEqual(t2)).toBeFalsy()
 
     // Ensure the equality case of the comparisons works correctly
     const t3 = new lib.RationalTime(30.4, 2)
-    expect(t1 <= t3).toBe(true)
-    expect(t1 >= t3).toBe(true)
-    expect(t3 <= t1).toBe(true)
-    expect(t3 >= t1).toBe(true)
+    expect(t1.lessThanOrEqual(t3)).toBeTruthy()
+    expect(t1.greaterThanOrEqual(t3)).toBeTruthy()
+    expect(t3.lessThanOrEqual(t1)).toBeTruthy()
+    expect(t3.greaterThanOrEqual(t1)).toBeTruthy()
 
     // test implicit base conversion
     t2 = new lib.RationalTime(15.6, 48)
-    expect(t1 > t2).toBe(true)
-    expect(t1 >= t2).toBe(true)
-    expect(t1 < t2).toBe(false)
-    expect(t1 <= t2).toBe(false)
+    expect(t1.greaterThan(t2)).toBeTruthy()
+    expect(t1.greaterThanOrEqual(t2)).toBeTruthy()
+    expect(t1.lessThan(t2)).toBeFalsy()
+    expect(t1.lessThanOrEqual(t2)).toBeFalsy()
 })
 
 //     def test_copy(self):
