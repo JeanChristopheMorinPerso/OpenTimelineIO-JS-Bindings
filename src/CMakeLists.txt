@@ -52,7 +52,7 @@ endif()
 
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 if (CMAKE_BUILD_TYPE MATCHES Debug)
-    string(APPEND JS_LINK_FLAGS "--bind -O0 -g3 -gsource-map -fsanitize=address --source-map-base http://localhost:8000/install/ ")
+    string(APPEND JS_LINK_FLAGS "--bind -O0 -g3 -gsource-map -fsanitize=address --source-map-base http://localhost:8000/install/ --profile ")
 else()
     string(APPEND JS_LINK_FLAGS "-flto -Os --bind ")
     string(APPEND JS_COMPILE_FLAGS "-flto -Os ")
