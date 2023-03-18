@@ -348,14 +348,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             ems::optional_override(
                 [](OTIO_NS::SerializableObjectWithMetadata& so,
                    OTIO_NS::AnyDictionary                   metadata) {
-                    std::cout << "Size before swap: "
-                                     + std::to_string(so.metadata().size())
-                                     + "\n";
                     OTIO_NS::AnyDictionary& old_metadata = so.metadata();
                     old_metadata                         = metadata;
-                    std::cout << "Size after swap: "
-                                     + std::to_string(so.metadata().size())
-                                     + "\n";
                 }));
 
     ADD_TO_STRING_TAG_PROPERTY(SerializableObjectWithMetadata);
@@ -1309,7 +1303,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::function(
         "serialize_json_to_string",
         ems::optional_override([](OTIO_NS::SerializableObject* so) {
-            // This is required because serialize_json_to_string needsa retainers.
+            // This is required because serialize_json_to_string needs a retainer.
             OTIO_NS::SerializableObject::Retainer<> retainer = so;
 
             return OTIO_NS::serialize_json_to_string(
@@ -1323,35 +1317,35 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     // ems::function(
     //     "serialize_json_to_string",
     //     ems::optional_override([](ems::val data) {
-    //         return serialize_json_to_string(
+    //         return OTIO_NS::serialize_json_to_string(
     //             js_to_any(data),
     //             nullptr,
     //             ErrorStatusHandler());
     //     }));
 
-    ems::function(
-        "serialize_json_to_string",
-        ems::optional_override(
-            [](ems::val                           data,
-               OTIO_NS::schema_version_map const& schema_version_targets) {
-                return OTIO_NS::serialize_json_to_string(
-                    js_to_any(data),
-                    &schema_version_targets,
-                    ErrorStatusHandler());
-            }));
+    // ems::function(
+    //     "serialize_json_to_string",
+    //     ems::optional_override(
+    //         [](ems::val                           data,
+    //            OTIO_NS::schema_version_map const& schema_version_targets) {
+    //             return OTIO_NS::serialize_json_to_string(
+    //                 js_to_any(data),
+    //                 &schema_version_targets,
+    //                 ErrorStatusHandler());
+    //         }));
 
-    ems::function(
-        "serialize_json_to_string",
-        ems::optional_override(
-            [](ems::val                           data,
-               OTIO_NS::schema_version_map const& schema_version_targets,
-               int                                indent) {
-                return OTIO_NS::serialize_json_to_string(
-                    js_to_any(data),
-                    &schema_version_targets,
-                    ErrorStatusHandler(),
-                    indent);
-            }));
+    // ems::function(
+    //     "serialize_json_to_string",
+    //     ems::optional_override(
+    //         [](ems::val                           data,
+    //            OTIO_NS::schema_version_map const& schema_version_targets,
+    //            int                                indent) {
+    //             return OTIO_NS::serialize_json_to_string(
+    //                 js_to_any(data),
+    //                 &schema_version_targets,
+    //                 ErrorStatusHandler(),
+    //                 indent);
+    //         }));
 
     ems::function(
         "serialize_json_to_file",

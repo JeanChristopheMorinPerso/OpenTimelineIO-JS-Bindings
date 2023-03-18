@@ -12,23 +12,28 @@ beforeAll(async () => {
     opentimelineio = await opentimelineioFactory();
 });
 
-// This can look weird, but serializatin and deserialization is part of
+test('test_serialize_object', () => {
+    const so = new opentimelineio.SerializableObject()
+    expect(so.to_json_string(4)).toEqual(`{
+    "OTIO_SCHEMA": "SerializableObject.1"
+}`)
+    so.delete()
+})
+
+// This can look weird, but serialization and deserialization is part of
 // opentimelineio, not opentime.
 test('test_serialize_time', () => {
     const rt = new opentimelineio.RationalTime(15, 24);
-    const encoded = opentimelineio.serialize_json_to_string(rt);
-    const decoded = opentimelineio.deserialize_json_from_string(encoded);
+    const decoded = opentimelineio.deserialize_json_from_string(rt.to_json_string());
     expect(rt).toEqual(decoded);
 
     const rt_dur = new opentimelineio.RationalTime(10, 20)
     const tr = new opentimelineio.TimeRange(rt, rt_dur)
-    const encoded2 = opentimelineio.serialize_json_to_string(tr)
-    const decoded2 = opentimelineio.deserialize_json_from_string(encoded2)
+    const decoded2 = opentimelineio.deserialize_json_from_string(tr.to_json_string())
     expect(tr).toEqual(decoded2)
 
     const tt = new opentimelineio.TimeTransform(rt_dur, 1.5)
-    const encoded3 = opentimelineio.serialize_json_to_string(tt)
-    const decoded3 = opentimelineio.deserialize_json_from_string(encoded3)
+    const decoded3 = opentimelineio.deserialize_json_from_string(tt.to_json_string())
     expect(tt).toEqual(decoded3)
 })
 
@@ -38,7 +43,6 @@ test('test_serialize', () => {
             callback();
             throw new Error('Expected function to throw!');
         } catch (err) {
-            // console.log(err.is(lib.asm.__cpp_exception))
             expect(err).toBeInstanceOf(WebAssembly.Exception)
             expect(err.message[1]).toEqual(expectedMessage)
         }
@@ -98,7 +102,6 @@ test('test_subclass', () => {
 
     instance1.myprop1 = '1234'
 
-    console.log('Calling to_json_string')
     expect(instance1.to_json_string(4)).toEqual(`{
     "OTIO_SCHEMA": "MyFoo1.1",
     "myprop1": "1234"
@@ -134,25 +137,26 @@ test('test_subclass', () => {
 
 test('test_constructors', () => {
     const asd = new opentimelineio.SerializableObject();
-    console.log(asd.to_json_string(4))
-    console.log(asd.to_json_string(4))
-    console.log(asd.schema_name())
-    console.log(asd.schema_name())
+    // Call twice to make sure it doesn't crash.
+    asd.to_json_string(4)
+    asd.to_json_string(4)
+    asd.schema_name()
+    asd.schema_name()
     asd.delete()
 
     const soMetadata = new opentimelineio.SerializableObjectWithMetadata()
-    console.log(soMetadata.to_json_string(4))
-    console.log(soMetadata.to_json_string(4))
+    soMetadata.to_json_string(4)
+    soMetadata.to_json_string(4)
     soMetadata.delete()
 
     const soMetadata2 = new opentimelineio.SerializableObjectWithMetadata('myname')
-    console.log(soMetadata2.to_json_string(4))
-    console.log(soMetadata2.to_json_string(4))
+    soMetadata2.to_json_string(4)
+    soMetadata2.to_json_string(4)
     soMetadata2.delete()
 
     const soMetadata3 = new opentimelineio.SerializableObjectWithMetadata('myname', { myky: 'myvalue' })
-    console.log(soMetadata3.to_json_string(4))
-    console.log(soMetadata3.to_json_string(4))
+    soMetadata3.to_json_string(4)
+    soMetadata3.to_json_string(4)
     soMetadata3.delete()
 })
 

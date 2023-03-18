@@ -9,8 +9,11 @@
 #include <opentime/rationalTime.h>
 #include <opentime/timeRange.h>
 #include <opentime/timeTransform.h>
+#include <opentimelineio/any.h>
+#include <opentimelineio/serialization.h>
 
 #include "common_utils.h"
+#include "errorStatusHandler.h"
 #include "exceptions.h"
 
 namespace ems = emscripten;
@@ -80,6 +83,28 @@ _type_checked(ems::val const& rhs, char const* op)
         ems::optional_override([](TYPE const& lhs, ems::val const& rhs) {      \
             return lhs OPERATOR _type_checked<TYPE>(rhs, #OPERATOR);           \
         }))
+
+/**
+ * Add to_json_string methods
+ * @param TYPE Type of the object.
+*/
+#define ADD_TO_JSON_STRING(TYPE)                                               \
+    .function("to_json_string", ems::optional_override([](TYPE const& item) {  \
+                  return OTIO_NS::serialize_json_to_string(                    \
+                      linb::any(item),                                         \
+                      nullptr,                                                 \
+                      ErrorStatusHandler(),                                    \
+                      4);                                                      \
+              }))                                                              \
+        .function(                                                             \
+            "to_json_string",                                                  \
+            ems::optional_override([](TYPE const& item, int indent) {          \
+                return OTIO_NS::serialize_json_to_string(                      \
+                    linb::any(item),                                           \
+                    nullptr,                                                   \
+                    ErrorStatusHandler(),                                      \
+                    indent);                                                   \
+            }))
 
 EMSCRIPTEN_BINDINGS(opentime)
 {
@@ -184,6 +209,7 @@ EMSCRIPTEN_BINDINGS(opentime)
                     ErrorStatusConverter());
             }))
         // clang-format off
+        ADD_TO_JSON_STRING(opentime::RationalTime)
         ADD_COMPARISON_OPERATOR(RationalTime, "equal", ==)
         ADD_COMPARISON_OPERATOR(RationalTime, "notEqual", !=)
         ADD_COMPARISON_OPERATOR(RationalTime, "lessThan", <)
@@ -273,6 +299,7 @@ EMSCRIPTEN_BINDINGS(opentime)
             "range_from_start_end_time_inclusive",
             &TimeRange::range_from_start_end_time_inclusive)
         // clang-format off
+        ADD_TO_JSON_STRING(opentime::TimeRange)
         ADD_COMPARISON_OPERATOR(TimeRange, "equal", ==)
         ADD_COMPARISON_OPERATOR(TimeRange, "notEqual", !=);
     // clang-format on
@@ -301,6 +328,7 @@ EMSCRIPTEN_BINDINGS(opentime)
             ems::select_overload<RationalTime(RationalTime) const>(
                 &TimeTransform::applied_to))
         // clang-format off
+        ADD_TO_JSON_STRING(opentime::TimeTransform)
         ADD_COMPARISON_OPERATOR(TimeTransform, "equal", ==)
         ADD_COMPARISON_OPERATOR(TimeTransform, "notEqual", !=);
     // clang-format on

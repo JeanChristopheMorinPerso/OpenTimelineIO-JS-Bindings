@@ -228,6 +228,13 @@ js_to_any(ems::val const& item)
     std::string jsType  = std::string(rawType);
     free(rawType);
 
+    // TODO: Figure out how to convert ems::val SerializableObject, etc to C++.
+    // if (jsType == "SerializableObject")
+    // {
+    //     OTIO_NS::SerializableObject so = item.as<OTIO_NS::SerializableObject>();
+    //     return linb::any(so);
+    // }
+
     if (jsType == "RationalTime")
     {
         OTIO_NS::RationalTime rt = item.as<OTIO_NS::RationalTime>();

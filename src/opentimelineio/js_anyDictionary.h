@@ -62,7 +62,7 @@ struct BindingType<OTIO_NS::AnyDictionary>
     static OTIO_NS::AnyDictionary fromWireType(WireType value)
     {
         std::cout
-            << "Entering BindingType,OTIO_NS::AnyDictionary>::fromWireType\n";
+            << "Entering BindingType<OTIO_NS::AnyDictionary>::fromWireType\n";
         return js_map_to_cpp(ValBinding::fromWireType(value));
     }
 };

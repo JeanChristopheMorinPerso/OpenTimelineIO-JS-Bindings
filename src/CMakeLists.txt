@@ -65,6 +65,7 @@ message(STATUS "JS_COMPILE_FLAGS: ${JS_COMPILE_FLAGS}")
 set(OPENTIME_SRC ${CMAKE_CURRENT_SOURCE_DIR}/opentime)
 set(OPENTIME_DEPS
     ${OPENTIME_SRC}/bindings.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/errorStatusHandler.cpp
 )
 
 add_executable(opentime-js ${OPENTIME_SRC}/lib.cpp
@@ -78,11 +79,13 @@ set_target_properties(opentime-js
     SOVERSION "1.0")
 
 target_link_libraries(opentime-js
-    PUBLIC OTIO::opentime)
+    PUBLIC OTIO::opentime OTIO::opentimelineio)
 
 target_include_directories(opentime-js
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src"
+    PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src/deps"
+    PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src/deps/optional-lite/include"
 )
 
 add_custom_target(opentime-ts
