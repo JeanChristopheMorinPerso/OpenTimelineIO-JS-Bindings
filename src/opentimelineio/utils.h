@@ -162,15 +162,15 @@ struct JSMutableSequence : public V
 
     Iterator* iter() { return new Iterator(static_cast<V&>(*this)); }
 
-    static void define_js_class(std::string name)
+    static void define_js_class(const char* name, const char* iteratorName)
     {
         typedef JSMutableSequence This;
 
         // TODO: tsembind generates garante names with this...
-        ems::class_<This::Iterator>((name + "Iterator").c_str())
+        ems::class_<This::Iterator>(iteratorName)
             .function("next", &This::Iterator::next);
 
-        ems::class_<This>(name.c_str())
+        ems::class_<This>(name)
             .template constructor<>()
             .property("length", &This::length)
             .function("at", &This::at, ems::allow_raw_pointers())

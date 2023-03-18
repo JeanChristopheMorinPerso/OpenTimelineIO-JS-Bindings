@@ -554,8 +554,12 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         std::vector<OTIO_NS::SerializableObject::Retainer<OTIO_NS::Marker>>,
         OTIO_NS::Marker*>;
 
-    EffectVectorProxy::define_js_class("EffectVectorProxy");
-    MarkerVectorProxy::define_js_class("MarkerVectorProxy");
+    EffectVectorProxy::define_js_class(
+        "EffectVectorProxy",
+        "EffectVectorProxyIterator");
+    MarkerVectorProxy::define_js_class(
+        "MarkerVectorProxy",
+        "MarkerVectorProxyIterator");
 
     ems::class_<OTIO_NS::Item, ems::base<OTIO_NS::Composable>>("Item")
         .smart_ptr<managing_ptr<OTIO_NS::Item>>("Item")
