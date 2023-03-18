@@ -187,6 +187,7 @@ test('equality', () => {
 test('test_truthiness', () => {
     const so = new opentimelineio.SerializableObject()
     expect(so).toBeTruthy()
+    so.delete()
 })
 
 test.skip('test_instancing_without_instancing_support', () => {
