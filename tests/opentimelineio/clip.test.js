@@ -36,4 +36,5 @@ test('test_contructors', () => {
 
 test('test_find_clips', () => {
     const clip = new opentimelineio.Clip('test_clip')
+    clip.delete()
 })

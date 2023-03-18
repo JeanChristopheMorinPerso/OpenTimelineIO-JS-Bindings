@@ -29,10 +29,6 @@ test('test_contructors', () => {
 test('test_copy_arguments', () => {
     const tr = new opentimelineio.TimeRange(new opentimelineio.RationalTime(0, 1), new opentimelineio.RationalTime(10, 1))
 
-    const effects = []
-    const markers = []
-    const metadata = {}
-
     // TODO: This doesn't work. We need to pass a EffectVector and MarkerVector...
     // Should look into supporting real arrays.
     // const item = new opentimelineio.Item('foo', tr, effects, markers, true, metadata)
