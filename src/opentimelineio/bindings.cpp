@@ -212,7 +212,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             SerializableObjectWrapper,
             managing_ptr<SerializableObjectWrapper>>(
             "SerializableObjectWrapper",
-            "SerializableObjectWrapperPtr")
+            "SerializableObjectWrapper")
         .function(
             "_get_dynamic_fields",
             &OTIO_NS::SerializableObject::dynamic_fields)
@@ -328,7 +328,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             SerializableObjectWithMetadataWrapper,
             managing_ptr<SerializableObjectWithMetadataWrapper>>(
             "SerializableObjectWithMetadataWrapper",
-            "SerializableObjectWithMetadataWrapperPtr")
+            "SerializableObjectWithMetadataWrapper")
         .property(
             "name",
             &OTIO_NS::SerializableObjectWithMetadata::name,
