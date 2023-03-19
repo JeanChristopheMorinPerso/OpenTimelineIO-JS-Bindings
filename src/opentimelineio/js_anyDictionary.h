@@ -4,12 +4,14 @@
 #ifndef JS_ANYDICTIONARY_H
 #define JS_ANYDICTIONARY_H
 
+#include <iostream>
+#include <string>
+#include <unordered_map>
+#include <utility>
+
 #include "any/any.hpp"
 #include <emscripten/bind.h>
-#include <iostream>
 #include <opentimelineio/anyDictionary.h>
-#include <string>
-#include <utility>
 
 #include "utils.h"
 
@@ -66,6 +68,32 @@ struct BindingType<OTIO_NS::AnyDictionary>
         return js_map_to_cpp(ValBinding::fromWireType(value));
     }
 };
+
+// unordered_map
+template <>
+struct TypeID<std::unordered_map<std::string, int64_t>>
+{
+    static constexpr TYPEID get() { return LightTypeID<val>::get(); }
+};
+
+template <>
+struct TypeID<const std::unordered_map<std::string, int64_t>>
+{
+    static constexpr TYPEID get() { return LightTypeID<val>::get(); }
+};
+
+template <>
+struct TypeID<std::unordered_map<std::string, int64_t>&>
+{
+    static constexpr TYPEID get() { return LightTypeID<val>::get(); }
+};
+
+template <>
+struct TypeID<const std::unordered_map<std::string, int64_t>&>
+{
+    static constexpr TYPEID get() { return LightTypeID<val>::get(); }
+};
+
 }} // namespace emscripten::internal
 
 #endif // JS_ANYDICTIONARY_H
