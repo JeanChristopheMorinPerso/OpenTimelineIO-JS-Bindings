@@ -2,7 +2,7 @@
 // Copyright Contributors to the OpenTimelineIO project
 
 #include <cerrno>
-#include <cstring>
+#include <format>
 #include <stdexcept>
 
 #include <emscripten/bind.h>
@@ -67,22 +67,6 @@ ErrorStatusHandler::~ErrorStatusHandler() noexcept(false)
     }
 }
 
-template <typename... Args>
-std::string
-string_printf(char const* format, Args... args)
-{
-    char   buffer[4096];
-    size_t size = snprintf(buffer, sizeof(buffer), format, args...) + 1;
-    if (size < sizeof(buffer))
-    {
-        return std::string(buffer);
-    }
-
-    std::unique_ptr<char[]> buf(new char[size]);
-    std::snprintf(buf.get(), size, format, args...);
-    return std::string(buf.get());
-}
-
 std::string
 ErrorStatusHandler::details()
 {
@@ -91,13 +75,12 @@ ErrorStatusHandler::details()
         return error_status.details;
     }
 
-    return string_printf(
-        "%s: %s",
-        error_status.details.c_str(),
+    return std::format(
+        "{}: {}",
+        error_status.details,
         ems::val(error_status.object_details)
             .call<ems::val>("toString")
-            .as<std::string>()
-            .c_str());
+            .as<std::string>());
 }
 
 std::string
@@ -108,13 +91,12 @@ ErrorStatusHandler::full_details()
         return error_status.full_description;
     }
 
-    return string_printf(
-        "%s: %s",
-        error_status.full_description.c_str(),
+    return std::format(
+        "{}: {}",
+        error_status.full_description,
         ems::val(error_status.object_details)
             .call<ems::val>("toString")
-            .as<std::string>()
-            .c_str());
+            .as<std::string>());
 }
 
 namespace jsexceptions {

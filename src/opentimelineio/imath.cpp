@@ -1,32 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
-#include <ImathBox.h>
-#include <ImathVec.h>
 #include <cstdio>
-#include <emscripten/bind.h>
-#include <emscripten/val.h>
+#include <format>
 #include <memory>
 #include <string>
+
+#include <ImathBox.h>
+#include <ImathVec.h>
+#include <emscripten/bind.h>
+#include <emscripten/val.h>
 
 #include "exceptions.h"
 
 namespace ems = emscripten;
-
-template <typename... Args>
-std::string
-string_printf(char const* format, Args... args)
-{
-    char   buffer[4096];
-    size_t size = std::snprintf(buffer, sizeof(buffer), format, args...) + 1;
-    if (size < sizeof(buffer))
-    {
-        return std::string(buffer);
-    }
-
-    std::unique_ptr<char[]> buf(new char[size]);
-    std::snprintf(buf.get(), size, format, args...);
-    return std::string(buf.get());
-}
 
 template <typename CLASS>
 CLASS
@@ -38,9 +24,9 @@ _type_checked(ems::val const& rhs, char const* op)
     }
     catch (...)
     {
-        throw TypeError(string_printf(
-            "Unsupported operand type(s) for %s: "
-            "%s and %s",
+        throw TypeError(std::format(
+            "Unsupported operand type(s) for {}: "
+            "{} and {}",
             typeid(CLASS).name(),
             op,
             rhs.typeof().as<std::string>().c_str()));

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
 #include <cstdio>
+#include <format>
 #include <memory>
 #include <string>
 
@@ -18,22 +19,6 @@
 
 namespace ems = emscripten;
 using namespace opentime;
-
-template <typename... Args>
-std::string
-string_printf(char const* format, Args... args)
-{
-    char   buffer[4096];
-    size_t size = std::snprintf(buffer, sizeof(buffer), format, args...) + 1;
-    if (size < sizeof(buffer))
-    {
-        return std::string(buffer);
-    }
-
-    std::unique_ptr<char[]> buf(new char[size]);
-    std::snprintf(buf.get(), size, format, args...);
-    return std::string(buf.get());
-}
 
 namespace {
 
@@ -63,11 +48,11 @@ _type_checked(ems::val const& rhs, char const* op)
     }
     catch (...)
     {
-        throw TypeError(string_printf(
-            "unsupported operand type(s) for %s: "
-            "RationalTime and %s",
+        throw TypeError(std::format(
+            "unsupported operand type(s) for {}: "
+            "RationalTime and {}",
             op,
-            rhs.typeOf().as<std::string>().c_str()));
+            rhs.typeOf().as<std::string>()));
     }
 }
 

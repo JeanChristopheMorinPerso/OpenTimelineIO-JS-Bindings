@@ -1,7 +1,7 @@
 .PHONY: setup build clean install
 
 BUILD_TYPE ?= Release
-EMSCRIPTEN_VERSION ?= 3.1.31
+EMSCRIPTEN_VERSION ?= 3.1.34
 
 setup:
 	git clone https://github.com/emscripten-core/emsdk.git
