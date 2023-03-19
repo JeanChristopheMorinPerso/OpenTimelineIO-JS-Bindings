@@ -117,6 +117,7 @@ set(OPENTIMEINEIO_DEPS
     ${CMAKE_CURRENT_SOURCE_DIR}/errorStatusHandler.cpp
     ${OPENTIMELINEIO_SRC}/utils.cpp
     ${OPENTIMELINEIO_SRC}/imath.cpp
+    ${OPENTIMELINEIO_SRC}/js_any.cpp
 )
 
 add_executable(opentimelineio-js ${OPENTIMELINEIO_SRC}/lib.cpp

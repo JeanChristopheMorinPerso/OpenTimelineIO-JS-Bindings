@@ -17,6 +17,20 @@ test('test_serialize_object', () => {
     expect(so.to_json_string(4)).toEqual(`{
     "OTIO_SCHEMA": "SerializableObject.1"
 }`)
+
+    expect(opentimelineio.serialize_json_to_string(so)).toEqual(`{
+    "OTIO_SCHEMA": "SerializableObject.1"
+}`)
+
+    expect(opentimelineio.serialize_json_to_string(so, { indent: 10 })).toEqual(`{
+          "OTIO_SCHEMA": "SerializableObject.1"
+}`)
+
+    expect(opentimelineio.serialize_json_to_string(so, { indent: 0 })).toEqual(`{
+"OTIO_SCHEMA": "SerializableObject.1"
+}`)
+
+    // TODO: Test schema_version_target and exceptions.
     so.delete()
 })
 
@@ -24,7 +38,8 @@ test('test_serialize_object', () => {
 // opentimelineio, not opentime.
 test('test_serialize_time', () => {
     const rt = new opentimelineio.RationalTime(15, 24);
-    const decoded = opentimelineio.deserialize_json_from_string(rt.to_json_string());
+    const encoded = opentimelineio.serialize_json_to_string(rt)
+    const decoded = opentimelineio.deserialize_json_from_string(encoded);
     expect(rt).toEqual(decoded);
 
     const rt_dur = new opentimelineio.RationalTime(10, 20)

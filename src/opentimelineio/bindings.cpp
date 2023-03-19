@@ -41,6 +41,7 @@
 
 #include "common_utils.h"
 #include "errorStatusHandler.h"
+#include "js_any.h"
 #include "js_anyDictionary.h"
 #include "js_optional.h"
 #include "utils.h"
@@ -1300,52 +1301,58 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         }),
         ems::allow_raw_pointers());
 
-    ems::function(
-        "serialize_json_to_string",
-        ems::optional_override([](OTIO_NS::SerializableObject* so) {
-            // This is required because serialize_json_to_string needs a retainer.
-            OTIO_NS::SerializableObject::Retainer<> retainer = so;
-
-            return OTIO_NS::serialize_json_to_string(
-                linb::any(retainer),
-                nullptr,
-                ErrorStatusHandler());
-        }),
-        ems::allow_raw_pointers());
-
     // TODO: Figure out why when we use this, js_to_any returns an AnyDictionary...
-    // ems::function(
-    //     "serialize_json_to_string",
-    //     ems::optional_override([](ems::val data) {
-    //         return OTIO_NS::serialize_json_to_string(
-    //             js_to_any(data),
-    //             nullptr,
-    //             ErrorStatusHandler());
-    //     }));
+    ems::function(
+        "_serialize_RationalTime_to_string",
+        ems::optional_override(
+            [](JSAnyRationalTime const&           art,
+               OTIO_NS::schema_version_map const& schema_version_target,
+               int                                indent) {
+                return OTIO_NS::serialize_json_to_string(
+                    art.a,
+                    &schema_version_target,
+                    ErrorStatusHandler(),
+                    indent);
+            }));
 
-    // ems::function(
-    //     "serialize_json_to_string",
-    //     ems::optional_override(
-    //         [](ems::val                           data,
-    //            OTIO_NS::schema_version_map const& schema_version_targets) {
-    //             return OTIO_NS::serialize_json_to_string(
-    //                 js_to_any(data),
-    //                 &schema_version_targets,
-    //                 ErrorStatusHandler());
-    //         }));
+    ems::function(
+        "_serialize_TimeRange_to_string",
+        ems::optional_override(
+            [](JSAnyTimeRange const&              atr,
+               OTIO_NS::schema_version_map const& schema_version_target,
+               int                                indent) {
+                return OTIO_NS::serialize_json_to_string(
+                    atr.a,
+                    &schema_version_target,
+                    ErrorStatusHandler(),
+                    indent);
+            }));
 
-    // ems::function(
-    //     "serialize_json_to_string",
-    //     ems::optional_override(
-    //         [](ems::val                           data,
-    //            OTIO_NS::schema_version_map const& schema_version_targets,
-    //            int                                indent) {
-    //             return OTIO_NS::serialize_json_to_string(
-    //                 js_to_any(data),
-    //                 &schema_version_targets,
-    //                 ErrorStatusHandler(),
-    //                 indent);
-    //         }));
+    ems::function(
+        "_serialize_TimeTransform_to_string",
+        ems::optional_override(
+            [](JSAnyTimeTransform const&          att,
+               OTIO_NS::schema_version_map const& schema_version_target,
+               int                                indent) {
+                return OTIO_NS::serialize_json_to_string(
+                    att.a,
+                    &schema_version_target,
+                    ErrorStatusHandler(),
+                    indent);
+            }));
+
+    ems::function(
+        "_serialize_SerializableObject_to_string",
+        ems::optional_override(
+            [](JSAnySerializableObject const&     aso,
+               OTIO_NS::schema_version_map const& schema_version_target,
+               int                                indent) {
+                return OTIO_NS::serialize_json_to_string(
+                    aso.a,
+                    &schema_version_target,
+                    ErrorStatusHandler(),
+                    indent);
+            }));
 
     ems::function(
         "serialize_json_to_file",
