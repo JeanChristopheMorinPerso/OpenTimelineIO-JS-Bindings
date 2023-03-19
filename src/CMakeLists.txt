@@ -61,6 +61,19 @@ endif()
 message(STATUS "JS_LINK_FLAGS: ${JS_LINK_FLAGS}")
 message(STATUS "JS_COMPILE_FLAGS: ${JS_COMPILE_FLAGS}")
 
+# pre-js file
+# This file only exists to help CMake know when to re-link. In our case, when pre.js changes.
+#See https://blog.squareys.de/cmake-relink-js/.
+
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/pre.cpp
+    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_SOURCE_DIR}/pre.cpp
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pre.js
+)
+
+add_library(prejs STATIC ${CMAKE_CURRENT_SOURCE_DIR}/pre.js
+    ${CMAKE_CURRENT_SOURCE_DIR}/pre.cpp
+)
+
 # Opentime
 set(OPENTIME_SRC ${CMAKE_CURRENT_SOURCE_DIR}/opentime)
 set(OPENTIME_DEPS
@@ -79,7 +92,7 @@ set_target_properties(opentime-js
     SOVERSION "1.0")
 
 target_link_libraries(opentime-js
-    PUBLIC OTIO::opentime OTIO::opentimelineio)
+    PUBLIC OTIO::opentime OTIO::opentimelineio prejs)
 
 target_include_directories(opentime-js
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -119,7 +132,7 @@ set_target_properties(opentimelineio-js
     SOVERSION "1.0")
 
 target_link_libraries(opentimelineio-js
-    PUBLIC OTIO::opentime OTIO::opentimelineio)
+    PUBLIC OTIO::opentime OTIO::opentimelineio prejs)
 
 target_include_directories(opentimelineio-js
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
