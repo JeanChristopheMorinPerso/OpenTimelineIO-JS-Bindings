@@ -3,15 +3,6 @@
 
 /* global Module */
 Module.onRuntimeInitialized = function () {
-    /**
-    * Create a property (getter + setter) that OTIO will be able
-    * to serialize/deserialize.
-    *
-    * @param {Object} klass Class to attach the property to.
-    * @param {string} name Name of the property to create.
-    * @param {any} [required_type] Property type
-    */
-    // TODO: Add to TypeScript definitions.
     Module.serializable_field = function (klass, name, required_type) {
         Object.defineProperty(klass.prototype, name, {
             get() {
