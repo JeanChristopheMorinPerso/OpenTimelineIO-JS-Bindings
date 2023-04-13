@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "format": "prettier --write \"tests/**/*.{js}\"",
+    "format-tests": "prettier --write \"tests/**/*.js\"",
     "test": "jest"
   },
   "author": "Contributors to the OpenTimelineIO project <otio-discussion@lists.aswf.io>",
