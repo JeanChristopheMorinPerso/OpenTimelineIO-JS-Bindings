@@ -3,6 +3,32 @@
 This repository is the home to the [OpenTimelineIO](https://github.com/AcademySoftwareFoundation/OpenTimelineIO)
 Javascript bindings.
 
+## Prerequisites
+
+- Node 18 or higher ([https://nodejs.org/en/download](https://nodejs.org/en/download))
+
+## Getting Started
+Follow these steps to set up and run the JS Bindings project on your local machine:
+
+1. Create a fork of this repository
+
+2. Clone the repository
+```bash
+git clone --recurse-submodules https://github.com/{{YOUR_GITHUB_USERNAME}}/OpenTimelineIO-JS-Bindings.git
+cd OpenTimelineIO-JS-Bindings
+```
+
+3. Install dependencies
+```bash
+make setup
+```
+
+4. Build project
+```bash
+make build
+make install
+```
+
 ## State of the project
 
 This is still a work in progress for now, but the base is there. That is:
@@ -22,14 +48,6 @@ This is still a work in progress for now, but the base is there. That is:
 * `std::optional` is working.
 * Tests live in the [tests](./tests) directory.
 * Tests are run automatically on every push using GitHub Actions.
-
-## Build
-
-```
-make setup
-make build
-make install
-```
 
 Right now, files will be installed in the `./install` directory. This is hardcoded.
 
