@@ -82,12 +82,54 @@ test('test_serialize', () => {
 
 // TODO: Add more metadata (cover all possible types)
 test('test_metadata', () => {
-    const so = new opentimelineio.SerializableObjectWithMetadata()
+    const so = new opentimelineio.SerializableObjectWithMetadata(
+        'asd',
+        {
+            'string': 'myvalue',
+            'int': -2147483648,  // Max without BitInt support
+            'list': [1, 2.5, 'asd'],
+            'dict': { 'map1': [345] },
+            'AnyVector': [new opentimelineio.SerializableObjectWithMetadata('inside vector')],
+            'AnyDictionary': {},
+            'RationalTime': new opentimelineio.RationalTime(
+                10.0,
+                5.0
+            ),
+            'TimeRange': new opentimelineio.TimeRange(
+                new opentimelineio.RationalTime(1.0),
+                new opentimelineio.RationalTime(100.0)
+            ),
+            'TimeTransform': new opentimelineio.TimeTransform(
+                new opentimelineio.RationalTime(55.0),
+                999
+            ),
+            'SerializableObjectWithMetadata': new opentimelineio.SerializableObjectWithMetadata('asd'),
+        },
+    )
     const met = so.get_metadata()
     met['foo'] = 'bar'
+    met['so'] = new opentimelineio.SerializableObjectWithMetadata('sowithmet', { 'a': 'asd', 'b': 'b' })
+
     expect(met['foo']).toEqual('bar')
+
     so.set_metadata(met)
     expect(so.get_metadata()['foo']).toEqual('bar')
+
+    expect(opentimelineio.serialize_json_to_string(so.get_metadata()['so'])).toEqual(`{
+    "OTIO_SCHEMA": "SerializableObjectWithMetadata.1",
+    "metadata": {
+        "a": "asd",
+        "b": "b"
+    },
+    "name": "sowithmet"
+}`)
+
+    // TODO: Raises "ValueError,type mismatch while decoding: Encountered object of unknown type 'int'" error.
+    expect(opentimelineio.serialize_json_to_string(so)).toEqual('')
+
+    // TODO: This causes an error like: BindingError: SerializableObjectWithMetadata.name getter incompatible with "this" of type SerializableObjectWithMetadata.
+    // But doing `so.get_metadata() === {}` doesn't cause this error...
+    expect(so.get_metadata()).toEqual({})
     so.delete()
 })
 

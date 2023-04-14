@@ -18,6 +18,7 @@
 
 #include "exceptions.h"
 #include "js_anyDictionary.h" // Needed to support ems::val(AnyDictionary)
+#include "js_anyVector.h"     // Needed to support ems::val(AnyVector)
 #include "utils.h"
 
 namespace ems = emscripten;
@@ -164,6 +165,11 @@ any_to_js(linb::any const& a, bool top_level)
     {
         OTIO_NS::SerializableObject* so = OTIO_NS::safely_cast_retainer_any(a);
         return ems::val(so);
+    }
+    else if (tInfo == typeid(OTIO_NS::AnyVector))
+    {
+        OTIO_NS::AnyVector& v = OTIO_NS::temp_safely_cast_any_vector_any(a);
+        return ems::val(v);
     }
     else if (tInfo == typeid(OTIO_NS::AnyDictionary))
     {
