@@ -192,6 +192,15 @@ EM_JS(char*, get_real_js_type, (ems::EM_VAL handle), {
 });
 // clang-format on
 
+// https://emscripten.org/docs/api_reference/emscripten.h.html?highlight=em_js#c.EM_JS
+// clang-format off
+// Check if value is an instance of SerializableObject.
+EM_JS(bool, is_serializable, (ems::EM_VAL handle), {
+    var value = Emval.toValue(handle);
+    return value instanceof Module.SerializableObject;
+});
+// clang-format on
+
 linb::any
 js_to_any(ems::val const& item)
 {
@@ -228,8 +237,6 @@ js_to_any(ems::val const& item)
     std::string jsType  = std::string(rawType);
     free(rawType);
 
-    // TODO: Do we need to be able to handle SerializableObject?
-
     if (jsType == "RationalTime")
     {
         OTIO_NS::RationalTime rt = item.as<OTIO_NS::RationalTime>();
@@ -246,6 +253,13 @@ js_to_any(ems::val const& item)
     {
         OTIO_NS::TimeTransform tt = item.as<OTIO_NS::TimeTransform>();
         return linb::any(tt);
+    }
+
+    if (is_serializable(item.as_handle()))
+    {
+        OTIO_NS::SerializableObject::Retainer<> r(
+            item.as<OTIO_NS::SerializableObject*>(ems::allow_raw_pointers()));
+        return OTIO_NS::create_safely_typed_any(r.take_value());
     }
 
     if (item.typeOf().as<std::string>() == "object")

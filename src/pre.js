@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
 
+
 /* global Module */
 Module.onRuntimeInitialized = function () {
     Module.serializable_field = function (klass, name, required_type) {
@@ -42,7 +43,7 @@ Module.onRuntimeInitialized = function () {
             func = Module._serialize_SerializableObject_to_string
         } else {
             // TODO: Add a proper error message
-            throw new Error('asdasd')
+            throw new Error(`Error: serialize_json_to_string received an unknown type: ${item.constructor.name}`)
         }
 
         try {
