@@ -5,7 +5,7 @@ Javascript bindings.
 
 ## Prerequisites
 
-- Node 18 or higher ([https://nodejs.org/en/download](https://nodejs.org/en/download))
+- Node 17 or higher ([https://nodejs.org/en/download](https://nodejs.org/en/download))
 
 ## Getting Started
 Follow these steps to set up and run the JS Bindings project on your local machine:
@@ -29,12 +29,14 @@ make build
 make install
 ```
 
+Right now, files will be installed in the `./install` directory. This is hardcoded.
+
 ## State of the project
 
 This is still a work in progress for now, but the base is there. That is:
 
 * `SerializableObject`, `SerializableObjectWithMetadata`, ability to subclass them and
-  register custom schemas from Javascripts.
+  register custom schemas from Javascript.
 * `Composable`, `Marker`, `Clip` (partial) and `SerializableCollection` (partial).
 * Serialization and deserialization is mostly working, though it needs more work to
   cover everything.
@@ -48,8 +50,6 @@ This is still a work in progress for now, but the base is there. That is:
 * `std::optional` is working.
 * Tests live in the [tests](./tests) directory.
 * Tests are run automatically on every push using GitHub Actions.
-
-Right now, files will be installed in the `./install` directory. This is hardcoded.
 
 To run the tests, run `npm test`. [Jest](https://jestjs.io/) is used as a the test runner.
 Additional arguments can be passed to Jest like this: `npm test -- <additional arguments>`.
