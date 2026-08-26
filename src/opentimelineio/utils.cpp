@@ -331,10 +331,13 @@ struct KeepaliveMonitor
             // Note that ems::val works with ! only. SO double negate to get the truthy value.
             if (!!_keep_alive)
             {
-                // printf(
-                //     "KeepaliveMonitor::monitor: _keep_alive is truthy, trying to set to to undefined (clearing)\n");
-                _keep_alive =
-                    ems::val::undefined(); // this could cause destruction
+                // Releasing an ems::val only makes its JS object eligible for
+                // garbage collection. Explicitly delete the cloned Embind handle
+                // so its managing_ptr, and potentially the C++ object, are
+                // destroyed immediately.
+                ems::val keep_alive = _keep_alive;
+                _keep_alive         = ems::val::undefined();
+                keep_alive.call<void>("delete"); // this could cause destruction
             }
         }
         // printf("KeepaliveMonitor::monitor: end\n");

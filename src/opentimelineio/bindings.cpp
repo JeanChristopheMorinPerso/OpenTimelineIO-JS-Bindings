@@ -134,7 +134,22 @@ namespace {
 } // namespace
 // clang-format on
 
-REGISTER_WRAPPER(OTIO_NS::SerializableObject, SerializableObjectWrapper);
+// REGISTER_WRAPPER normally generates this type. It is written out here so the
+// lifecycle tests can count actual C++ destructor calls instead of only
+// checking whether Embind invalidated the JavaScript handle.
+struct SerializableObjectWrapper
+    : public ems::wrapper<OTIO_NS::SerializableObject>
+{
+    EMSCRIPTEN_WRAPPER(SerializableObjectWrapper);
+
+    ~SerializableObjectWrapper() override { ++_destructor_count; }
+
+    static int destructor_count() { return _destructor_count; }
+
+private:
+    inline static int _destructor_count = 0;
+};
+
 REGISTER_WRAPPER(
     OTIO_NS::SerializableObjectWithMetadata,
     SerializableObjectWithMetadataWrapper);
@@ -204,6 +219,10 @@ private:
 
 EMSCRIPTEN_BINDINGS(opentimelineio)
 {
+    ems::function(
+        "_serializable_object_wrapper_destructor_count",
+        &SerializableObjectWrapper::destructor_count);
+
     ems::class_<OTIO_NS::SerializableObject>("SerializableObject")
         .smart_ptr_constructor(
             "SerializableObject",
