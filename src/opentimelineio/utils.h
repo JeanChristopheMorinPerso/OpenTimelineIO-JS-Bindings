@@ -56,6 +56,32 @@ struct managing_ptr
         install_external_keepalive_monitor(ptr, false);
     }
 
+    // Move constructor. Embind uses this when it puts a returned managing_ptr
+    // into its heap-allocated wire storage. Transfer the Retainer's pointer and
+    // clear the source instead of copying it: a copy increments OTIO's
+    // intrusive reference count and can trigger the keepalive monitor.
+    managing_ptr(managing_ptr&& other) noexcept
+        : _retainer(nullptr)
+    {
+        _retainer.value       = other._retainer.value;
+        other._retainer.value = nullptr;
+    }
+
+    // Move assignment operator. Release the object currently held by this
+    // managing_ptr, then transfer the Retainer's pointer from other. As in the
+    // move constructor, this avoids temporarily incrementing OTIO's intrusive
+    // reference count and triggering the keepalive monitor.
+    managing_ptr& operator=(managing_ptr&& other) noexcept
+    {
+        if (this != &other)
+        {
+            managing_ptr old(std::move(*this));
+            _retainer.value       = other._retainer.value;
+            other._retainer.value = nullptr;
+        }
+        return *this;
+    }
+
     T* get() const { return _retainer.value; }
 
     OTIO_NS::SerializableObject::Retainer<T> _retainer;

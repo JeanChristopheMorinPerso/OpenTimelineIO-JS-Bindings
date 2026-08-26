@@ -53,8 +53,13 @@ This is still a work in progress for now, but the base is there. That is:
   of `v2d` for technical reasons.
 * `AnyDictionary` is automatically converted from C++ to JS and from JS to C++.
 * `AnyVector` is a work in progress.
-* Objects lifecycle needs more work. I think some instances are "leaked" (they stey
-  alive while they should get deleted).
+* Object lifetimes are shared between JavaScript handles and OTIO's C++ retainers.
+  Call `delete()` on JavaScript handles when they are no longer needed.
+  For JavaScript subclasses, `delete()` releases the caller's reference but does
+  not invalidate the handle while C++ still retains the object. In that case,
+  `isDeleted()` remains `false` until the final C++ owner releases the object and
+  its destructor runs. This behavior may change as part of the lifetime-management
+  TODO below.
 * `std::optional` is working.
 * Tests live in the [tests](./tests) directory.
 * Tests are run automatically on every push using GitHub Actions.
@@ -64,10 +69,11 @@ This is still a work in progress for now, but the base is there. That is:
 Most TODOs are documented in the code. Search for `TODO:` and you will find everything that
 still needs to be done. Other TODOs are bellow:
 
-* The delete method in JS doesn't trigger the destructors... managing_ptr + KeepaliveMonitor are
-  a little bit too good at keeping instances alive.
 * AnyVector is still unhandled.
 * AnyDictionary works but is not fully tested.
+* Simplify JavaScript object lifetime management: keep `managing_ptr` as the
+  adapter to OTIO's C++ retainers, replace owning raw-pointer returns with
+  `managing_ptr` returns, and then remove the Python-inspired `KeepaliveMonitor`.
 * Support `JSON.stringify`? (This would require to implement the `toJSON` method on objects).
 * Support toString methods?
 * Go through skipped tests.

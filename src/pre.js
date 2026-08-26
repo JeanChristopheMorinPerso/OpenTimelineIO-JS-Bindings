@@ -3,6 +3,36 @@
 
 /* global Module */
 Module.onRuntimeInitialized = function () {
+    function invalidateWrapperOnDestruction(baseClass, wrapperClass) {
+        const originalExtend = baseClass.extend
+
+        baseClass.extend = function (...args) {
+            const subclass = originalExtend.apply(this, args)
+            const originalDestruct = wrapperClass.prototype.__destruct
+
+            wrapperClass.prototype.__destruct = function () {
+                originalDestruct.call(this)
+
+                // Embind keeps this pointer valid when delete() is called while
+                // C++ still owns the object. Once the C++ destructor reaches
+                // this callback, the pointer is stale and must not be reused.
+                this.$$.smartPtr = undefined
+                this.$$.ptr = undefined
+            }
+
+            return subclass
+        }
+    }
+
+    invalidateWrapperOnDestruction(
+        Module.SerializableObject,
+        Module.SerializableObjectWrapper
+    )
+    invalidateWrapperOnDestruction(
+        Module.SerializableObjectWithMetadata,
+        Module.SerializableObjectWithMetadataWrapper
+    )
+
     Module.serializable_field = function (klass, name, required_type) {
         Object.defineProperty(klass.prototype, name, {
             get() {
