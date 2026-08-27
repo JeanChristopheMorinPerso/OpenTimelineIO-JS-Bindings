@@ -22,6 +22,10 @@ test('test_contructors', () => {
     const decoded = opentimelineio.SerializableObject.from_json_string(encoded)
     expect(item.is_equivalent_to(decoded)).toBeTruthy()
 
+    item.source_range = undefined
+    expect(item.source_range).toBeUndefined()
+
+    decoded.delete()
     item.delete()
     tr.delete()
 })
@@ -38,19 +42,60 @@ test('test_copy_arguments', () => {
 
 test('test_effects', () => {
     const vec = new opentimelineio.EffectVector();
-    vec.push_back(new opentimelineio.Effect('effect1'))
-    vec.push_back(new opentimelineio.Effect('effect2'))
+    const effect1 = new opentimelineio.Effect('effect1')
+    const effect2 = new opentimelineio.Effect('effect2')
+    vec.push_back(effect1)
+    vec.push_back(effect2)
 
     const item = new opentimelineio.Item(
         'my item',
-        null,
+        undefined,
         vec
     )
 
     const effects = item.get_effects()
-    console.log(effects)
-    console.log(effects.length)
-    console.log(effects.at(-1).name)
+    expect(Array.from(effects, effect => effect.name)).toEqual([
+        'effect1',
+        'effect2'
+    ])
+
+    const emptyItem = new opentimelineio.Item()
+    expect(Array.from(emptyItem.get_effects())).toEqual([])
+
+    emptyItem.delete()
     item.delete()
     vec.delete()
+    effect1.delete()
+    effect2.delete()
+})
+
+test('test_markers_iteration', () => {
+    const effects = new opentimelineio.EffectVector()
+    const markers = new opentimelineio.MarkerVector()
+    const marker1 = new opentimelineio.Marker('marker1')
+    const marker2 = new opentimelineio.Marker('marker2')
+    markers.push_back(marker1)
+    markers.push_back(marker2)
+
+    const item = new opentimelineio.Item(
+        'my item',
+        undefined,
+        effects,
+        markers
+    )
+
+    expect(Array.from(item.get_markers(), marker => marker.name)).toEqual([
+        'marker1',
+        'marker2'
+    ])
+
+    const emptyItem = new opentimelineio.Item()
+    expect(Array.from(emptyItem.get_markers())).toEqual([])
+
+    emptyItem.delete()
+    item.delete()
+    effects.delete()
+    markers.delete()
+    marker1.delete()
+    marker2.delete()
 })

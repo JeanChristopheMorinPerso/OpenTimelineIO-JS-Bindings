@@ -48,7 +48,9 @@ struct BindingType<OTIO_NS::AnyDictionary>
     using WireType   = ValBinding::WireType;
 
     // C++ > JS
-    static WireType toWireType(const OTIO_NS::AnyDictionary& data)
+    static WireType toWireType(
+        const OTIO_NS::AnyDictionary& data,
+        rvp::default_tag)
     {
         std::cout
             << "Entering BindingType<OTIO_NS::AnyDictionary>::toWireType\n";
@@ -57,7 +59,7 @@ struct BindingType<OTIO_NS::AnyDictionary>
         {
             obj.set(element.first, any_to_js(element.second, true));
         }
-        return ValBinding::toWireType(obj);
+        return ValBinding::toWireType(obj, rvp::default_tag {});
     }
 
     // JS > C++

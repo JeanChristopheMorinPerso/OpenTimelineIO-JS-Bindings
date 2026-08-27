@@ -29,7 +29,7 @@ _type_checked(ems::val const& rhs, char const* op)
             "{} and {}",
             typeid(CLASS).name(),
             op,
-            rhs.typeof().as<std::string>().c_str()));
+            rhs.typeOf().as<std::string>().c_str()));
     }
 }
 
