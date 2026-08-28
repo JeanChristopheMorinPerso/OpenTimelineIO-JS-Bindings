@@ -38,3 +38,41 @@ test('test_find_clips', () => {
     const clip = new opentimelineio.Clip('test_clip')
     clip.delete()
 })
+
+test('test_media_references', () => {
+    const primary = new opentimelineio.ExternalReference()
+    primary.target_url = 'primary.mov'
+    const proxy = new opentimelineio.MissingReference()
+    const clip = new opentimelineio.Clip('clip')
+
+    clip.set_media_references({ primary, proxy }, 'proxy')
+
+    const references = clip.media_references()
+    expect(Object.keys(references).sort()).toEqual(['primary', 'proxy'])
+    expect(references.primary.is_equivalent_to(primary)).toBe(true)
+    expect(references.proxy.is_equivalent_to(proxy)).toBe(true)
+    expect(clip.active_media_reference_key).toBe('proxy')
+
+    primary.delete()
+    proxy.delete()
+    clip.delete()
+})
+
+test('test_optional_image_bounds', () => {
+    const reference = new opentimelineio.MissingReference()
+    const bounds = new opentimelineio.Box2d(
+        new opentimelineio.V2d(1, 2),
+        new opentimelineio.V2d(3, 4)
+    )
+
+    expect(reference.available_image_bounds).toBeUndefined()
+    reference.available_image_bounds = bounds
+    const returnedBounds = reference.available_image_bounds
+    expect(returnedBounds.equal(bounds)).toBe(true)
+    returnedBounds.delete()
+    reference.available_image_bounds = undefined
+    expect(reference.available_image_bounds).toBeUndefined()
+
+    reference.delete()
+    bounds.delete()
+})
