@@ -164,6 +164,19 @@ namespace {
 } // namespace
 // clang-format on
 
+static OTIO_NS::schema_version_map
+schema_version_map_from_js(ems::val const& value)
+{
+    OTIO_NS::schema_version_map result;
+    ems::val entries =
+        ems::val::global("Object").call<ems::val>("entries", value);
+    for (size_t i = 0; i < entries["length"].as<size_t>(); ++i)
+    {
+        result[entries[i][0].as<std::string>()] = entries[i][1].as<int>();
+    }
+    return result;
+}
+
 // REGISTER_WRAPPER normally generates this type. It is written out here so the
 // lifecycle tests can count actual C++ destructor calls instead of only
 // checking whether Embind invalidated the JavaScript handle.
@@ -251,12 +264,14 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         // Don't override Emscripten's own clone method. Emscripten's clone
         // is not a copy, it creates a references which points to the same C++ object.
         // clone is similar to when compiling OTIO with INSTANCING_SUPPORT I guess? Not sure.
-        // TODO: This crashes. Stacktrace can be seen when cimpiling in Debug mode
-        // and running the tests.
         .function(
             "clone_otio",
             ems::optional_override([](OTIO_NS::SerializableObject* so) {
-                return so->clone(ErrorStatusHandler());
+                // Keep this as a separate statement: clone() may return nullptr,
+                // and ErrorStatusHandler must throw before managing_ptr tries to
+                // take ownership of that result.
+                auto* clone = so->clone(ErrorStatusHandler());
+                return managing_ptr<OTIO_NS::SerializableObject>(clone);
             }),
             ems::allow_raw_pointers())
         .function(
@@ -1335,12 +1350,13 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::function(
         "_serialize_RationalTime_to_string",
         ems::optional_override(
-            [](JSAnyRationalTime const&           art,
-               OTIO_NS::schema_version_map const& schema_version_target,
-               int                                indent) {
+            [](JSAnyRationalTime const& art,
+               ems::val const&          schema_version_target,
+               int                      indent) {
+                auto versions = schema_version_map_from_js(schema_version_target);
                 return OTIO_NS::serialize_json_to_string(
                     art.a,
-                    &schema_version_target,
+                    &versions,
                     ErrorStatusHandler(),
                     indent);
             }));
@@ -1348,12 +1364,13 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::function(
         "_serialize_TimeRange_to_string",
         ems::optional_override(
-            [](JSAnyTimeRange const&              atr,
-               OTIO_NS::schema_version_map const& schema_version_target,
-               int                                indent) {
+            [](JSAnyTimeRange const& atr,
+               ems::val const&       schema_version_target,
+               int                   indent) {
+                auto versions = schema_version_map_from_js(schema_version_target);
                 return OTIO_NS::serialize_json_to_string(
                     atr.a,
-                    &schema_version_target,
+                    &versions,
                     ErrorStatusHandler(),
                     indent);
             }));
@@ -1361,12 +1378,13 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::function(
         "_serialize_TimeTransform_to_string",
         ems::optional_override(
-            [](JSAnyTimeTransform const&          att,
-               OTIO_NS::schema_version_map const& schema_version_target,
-               int                                indent) {
+            [](JSAnyTimeTransform const& att,
+               ems::val const&           schema_version_target,
+               int                       indent) {
+                auto versions = schema_version_map_from_js(schema_version_target);
                 return OTIO_NS::serialize_json_to_string(
                     att.a,
-                    &schema_version_target,
+                    &versions,
                     ErrorStatusHandler(),
                     indent);
             }));
@@ -1374,12 +1392,13 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::function(
         "_serialize_SerializableObject_to_string",
         ems::optional_override(
-            [](JSAnySerializableObject const&     aso,
-               OTIO_NS::schema_version_map const& schema_version_target,
-               int                                indent) {
+            [](JSAnySerializableObject const& aso,
+               ems::val const&                schema_version_target,
+               int                            indent) {
+                auto versions = schema_version_map_from_js(schema_version_target);
                 return OTIO_NS::serialize_json_to_string(
                     aso.a,
-                    &schema_version_target,
+                    &versions,
                     ErrorStatusHandler(),
                     indent);
             }));
@@ -1397,27 +1416,29 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::function(
         "serialize_json_to_file",
         ems::optional_override(
-            [](ems::val                           data,
-               std::string                        filename,
-               OTIO_NS::schema_version_map const& schema_version_targets) {
+            [](ems::val        data,
+               std::string     filename,
+               ems::val const& schema_version_targets) {
+                auto versions = schema_version_map_from_js(schema_version_targets);
                 return OTIO_NS::serialize_json_to_file(
                     js_to_any(data),
                     filename,
-                    &schema_version_targets,
+                    &versions,
                     ErrorStatusHandler());
             }));
 
     ems::function(
         "serialize_json_to_file",
         ems::optional_override(
-            [](ems::val                           data,
-               std::string                        filename,
-               OTIO_NS::schema_version_map const& schema_version_targets,
-               int                                indent) {
+            [](ems::val        data,
+               std::string     filename,
+               ems::val const& schema_version_targets,
+               int             indent) {
+                auto versions = schema_version_map_from_js(schema_version_targets);
                 return OTIO_NS::serialize_json_to_file(
                     js_to_any(data),
                     filename,
-                    &schema_version_targets,
+                    &versions,
                     ErrorStatusHandler(),
                     indent);
             }));

@@ -30,8 +30,24 @@ test('test_serialize_object', () => {
 "OTIO_SCHEMA": "SerializableObject.1"
 }`)
 
-    // TODO: Test schema_version_target and exceptions.
+    // TODO: Test exceptions.
     so.delete()
+})
+
+test('test_schema_version_target', () => {
+    const clip = new opentimelineio.Clip('downgrade')
+
+    try {
+        const current = opentimelineio.serialize_json_to_string(clip)
+        expect(JSON.parse(current).OTIO_SCHEMA).toBe('Clip.2')
+
+        const downgraded = opentimelineio.serialize_json_to_string(clip, {
+            schema_version_target: { Clip: 1 }
+        })
+        expect(JSON.parse(downgraded).OTIO_SCHEMA).toBe('Clip.1')
+    } finally {
+        clip.delete()
+    }
 })
 
 // This can look weird, but serialization and deserialization is part of
@@ -179,7 +195,7 @@ test('test_constructors', () => {
     soMetadata3.delete()
 })
 
-test.skip('test_copy_lib', () => {
+test('test_copy_lib', () => {
     const so = new opentimelineio.SerializableObjectWithMetadata('', { 'foo': 'bar' })
 
     const so_copy = so.clone_otio()
@@ -193,6 +209,28 @@ test.skip('test_copy_lib', () => {
     expect(so.is_equivalent_to(so_copy)).toEqual(false)
     so.delete()
     so_copy.delete()
+})
+
+test('clone reports object cycles', () => {
+    const collection = new opentimelineio.SerializableCollection('cycle')
+    collection.insert_child(0, collection)
+
+    try {
+        let error
+        try {
+            collection.clone_otio()
+        } catch (caught) {
+            error = caught
+        }
+
+        expect(error).toBeInstanceOf(WebAssembly.Exception)
+        expect(error.message[1]).toMatch(
+            /Detected SerializableObject cycle while copying\/serializing/
+        )
+    } finally {
+        collection.clear_children()
+        collection.delete()
+    }
 })
 
 test('equality', () => {
