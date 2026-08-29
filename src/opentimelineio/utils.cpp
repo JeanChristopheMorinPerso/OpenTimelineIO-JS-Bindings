@@ -11,9 +11,11 @@
 #include "opentimelineio/safely_typed_any.h"
 #include "opentimelineio/stringUtils.h"
 #include <cstddef>
+#include <cstdint>
 #include <emscripten.h>
 #include <emscripten/val.h>
 #include <functional>
+#include <limits>
 #include <typeinfo>
 
 #include "exceptions.h"
@@ -131,7 +133,7 @@ any_to_js(linb::any const& a, bool top_level)
     {
         return ems::val(OTIO_NS::safely_cast_int64_any(a));
     }
-    else if (tInfo == typeid(int64_t))
+    else if (tInfo == typeid(uint64_t))
     {
         return ems::val(OTIO_NS::safely_cast_uint64_any(a));
     }
@@ -209,9 +211,15 @@ js_to_any(ems::val const& item)
 
     if (item.isNumber())
     {
-        // TODO: How to handle other types of ints? Javascript only has Number...
-        // Also, handle floats, double (?).
-        return linb::any(js_to_cpp<int32_t>(item));
+        // Conversion policy adapted from:
+        // https://github.com/GoogleChromeLabs/chromeos_smart_card_connector/blob/0b27ca29a733b98b2805248f03e54a9ad8886504/common/cpp/src/google_smart_card_common/value_emscripten_val_conversion.cc#L115-L126
+        if (ems::val::global("Number").call<bool>("isInteger", item)
+            && item <= ems::val(std::numeric_limits<int32_t>::max())
+            && item >= ems::val(std::numeric_limits<int32_t>::min()))
+        {
+            return linb::any(js_to_cpp<int32_t>(item));
+        }
+        return linb::any(js_to_cpp<double>(item));
     }
 
     if (item.isString())

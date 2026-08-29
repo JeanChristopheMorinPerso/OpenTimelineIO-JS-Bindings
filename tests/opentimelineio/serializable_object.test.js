@@ -113,6 +113,25 @@ test('test_metadata', () => {
     so.delete()
 })
 
+test('numeric metadata preserves fractions and values outside int32 range', () => {
+    const so = new opentimelineio.SerializableObjectWithMetadata()
+    so.set_metadata({
+        integer: 42,
+        fractional: 42.5,
+        above_int32: 2147483648,
+        below_int32: -2147483649
+    })
+
+    const metadata = so.get_metadata()
+    expect(metadata.integer).toBe(42)
+    expect(Number.isInteger(metadata.integer)).toBe(true)
+    expect(metadata.fractional).toBe(42.5)
+    expect(metadata.above_int32).toBe(2147483648)
+    expect(metadata.below_int32).toBe(-2147483649)
+
+    so.delete()
+})
+
 test('test_subclass', () => {
     // TODO: Document this.
     // Also, the embind docs documents another method.This method is taken from https://github.com/emscripten-core/emscripten/issues/7200#issuecomment-442323087
