@@ -47,7 +47,7 @@ struct BindingType<OTIO_NS::AnyVector>
     using WireType   = ValBinding::WireType;
 
     // C++ > JS
-    static WireType toWireType(const OTIO_NS::AnyVector& data)
+    static WireType toWireType(const OTIO_NS::AnyVector& data, rvp::default_tag)
     {
         std::cout << "Entering BindingType<OTIO_NS::AnyVector>::toWireType\n";
         val obj = val::array();
@@ -55,7 +55,7 @@ struct BindingType<OTIO_NS::AnyVector>
         {
             obj.call<void>("push", any_to_js(element, true));
         }
-        return ValBinding::toWireType(obj);
+        return ValBinding::toWireType(obj, rvp::default_tag{});
     }
 
     // JS > C++

@@ -26,7 +26,7 @@ test('test_contructors', () => {
     const encoded = opentimelineio.serialize_json_to_string(clip)
     const decoded = opentimelineio.SerializableObject.from_json_string(encoded)
     expect(clip.is_equivalent_to(decoded)).toEqual(true)
-    console.log(decoded.get_metadata());
+    expect(decoded.get_metadata()).toEqual({ 'asd': 'value' })
     rt.delete()
     tr.delete()
     mr.delete()

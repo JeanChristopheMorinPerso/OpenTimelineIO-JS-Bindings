@@ -46,7 +46,7 @@ _build_any_to_js_dispatch_table()
         return ems::val(OTIO_NS::safely_cast_int_any(a));
     };
     t[&typeid(int64_t)] = [](linb::any const& a, bool) {
-        return ems::val(OTIO_NS::safely_cast_int64_any(a));
+        return ems::val(static_cast<double>(OTIO_NS::safely_cast_int64_any(a)));
     };
     t[&typeid(uint64_t)] = [](linb::any const& a, bool) {
         return ems::val(OTIO_NS::safely_cast_uint64_any(a));
@@ -132,7 +132,7 @@ any_to_js(linb::any const& a, bool top_level)
     }
     else if (tInfo == typeid(int64_t))
     {
-        return ems::val(OTIO_NS::safely_cast_int64_any(a));
+        return ems::val(static_cast<double>(OTIO_NS::safely_cast_int64_any(a)));
     }
     else if (tInfo == typeid(uint64_t))
     {
@@ -232,7 +232,7 @@ js_to_any(ems::val const& item)
             && item <= ems::val(std::numeric_limits<int32_t>::max())
             && item >= ems::val(std::numeric_limits<int32_t>::min()))
         {
-            return linb::any(js_to_cpp<int32_t>(item));
+            return linb::any(static_cast<int64_t>(js_to_cpp<int32_t>(item)));
         }
         return linb::any(js_to_cpp<double>(item));
     }

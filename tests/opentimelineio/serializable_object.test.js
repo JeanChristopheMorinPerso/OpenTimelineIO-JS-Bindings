@@ -104,55 +104,113 @@ test('test_serialize', () => {
 
 // TODO: Add more metadata (cover all possible types)
 test('test_metadata', () => {
+    const vectorItem = new opentimelineio.SerializableObjectWithMetadata('inside vector')
+    const rationalTime = new opentimelineio.RationalTime(10.0, 5.0)
+    const rangeStart = new opentimelineio.RationalTime(1.0)
+    const rangeDuration = new opentimelineio.RationalTime(100.0)
+    const timeRange = new opentimelineio.TimeRange(rangeStart, rangeDuration)
+    const transformOffset = new opentimelineio.RationalTime(55.0)
+    const timeTransform = new opentimelineio.TimeTransform(transformOffset, 999)
+    const nestedObject = new opentimelineio.SerializableObjectWithMetadata('nested')
     const so = new opentimelineio.SerializableObjectWithMetadata(
         'asd',
         {
             'string': 'myvalue',
-            'int': -2147483648,  // Max without BitInt support
+            'int': -2147483648,
             'list': [1, 2.5, 'asd'],
             'dict': { 'map1': [345] },
-            'AnyVector': [new opentimelineio.SerializableObjectWithMetadata('inside vector')],
+            'AnyVector': [vectorItem],
             'AnyDictionary': {},
-            'RationalTime': new opentimelineio.RationalTime(
-                10.0,
-                5.0
-            ),
-            'TimeRange': new opentimelineio.TimeRange(
-                new opentimelineio.RationalTime(1.0),
-                new opentimelineio.RationalTime(100.0)
-            ),
-            'TimeTransform': new opentimelineio.TimeTransform(
-                new opentimelineio.RationalTime(55.0),
-                999
-            ),
-            'SerializableObjectWithMetadata': new opentimelineio.SerializableObjectWithMetadata('asd'),
+            'RationalTime': rationalTime,
+            'TimeRange': timeRange,
+            'TimeTransform': timeTransform,
+            'SerializableObjectWithMetadata': nestedObject,
         },
     )
-    const met = so.get_metadata()
-    met['foo'] = 'bar'
-    met['so'] = new opentimelineio.SerializableObjectWithMetadata('sowithmet', { 'a': 'asd', 'b': 'b' })
 
-    expect(met['foo']).toEqual('bar')
+    try {
+        const serialized = JSON.parse(opentimelineio.serialize_json_to_string(so))
+        expect(serialized.metadata).toEqual({
+            string: 'myvalue',
+            int: -2147483648,
+            list: [1, 2.5, 'asd'],
+            dict: { 'map1': [345] },
+            AnyVector: [{
+                OTIO_SCHEMA: 'SerializableObjectWithMetadata.1',
+                metadata: {},
+                name: 'inside vector'
+            }],
+            AnyDictionary: {},
+            RationalTime: {
+                OTIO_SCHEMA: 'RationalTime.1',
+                rate: 5,
+                value: 10
+            },
+            TimeRange: {
+                OTIO_SCHEMA: 'TimeRange.1',
+                duration: {
+                    OTIO_SCHEMA: 'RationalTime.1',
+                    rate: 1,
+                    value: 100
+                },
+                start_time: {
+                    OTIO_SCHEMA: 'RationalTime.1',
+                    rate: 1,
+                    value: 1
+                }
+            },
+            TimeTransform: {
+                OTIO_SCHEMA: 'TimeTransform.1',
+                offset: {
+                    OTIO_SCHEMA: 'RationalTime.1',
+                    rate: 1,
+                    value: 55
+                },
+                rate: -1,
+                scale: 999
+            },
+            SerializableObjectWithMetadata: {
+                OTIO_SCHEMA: 'SerializableObjectWithMetadata.1',
+                metadata: {},
+                name: 'nested'
+            }
+        })
+    } finally {
+        so.delete()
+        vectorItem.delete()
+        rationalTime.delete()
+        rangeStart.delete()
+        rangeDuration.delete()
+        timeRange.delete()
+        transformOffset.delete()
+        timeTransform.delete()
+        nestedObject.delete()
+    }
+})
 
-    so.set_metadata(met)
-    expect(so.get_metadata()['foo']).toEqual('bar')
+test('AnyVector metadata converts to a JavaScript array', () => {
+    const vectorItem = new opentimelineio.SerializableObjectWithMetadata('inside vector')
+    const so = new opentimelineio.SerializableObjectWithMetadata(
+        'owner',
+        { items: [vectorItem] },
+    )
+    let returnedItem
 
-    expect(opentimelineio.serialize_json_to_string(so.get_metadata()['so'])).toEqual(`{
-    "OTIO_SCHEMA": "SerializableObjectWithMetadata.1",
-    "metadata": {
-        "a": "asd",
-        "b": "b"
-    },
-    "name": "sowithmet"
-}`)
-
-    // TODO: Raises "ValueError,type mismatch while decoding: Encountered object of unknown type 'int'" error.
-    expect(opentimelineio.serialize_json_to_string(so)).toEqual('')
-
-    // TODO: This causes an error like: BindingError: SerializableObjectWithMetadata.name getter incompatible with "this" of type SerializableObjectWithMetadata.
-    // But doing `so.get_metadata() === {}` doesn't cause this error...
-    expect(so.get_metadata()).toEqual({})
-    so.delete()
+    try {
+        const metadata = so.get_metadata()
+        returnedItem = metadata.items[0]
+        expect({
+            isArray: Array.isArray(metadata.items),
+            names: metadata.items.map(item => item.name)
+        }).toEqual({
+            isArray: true,
+            names: ['inside vector']
+        })
+    } finally {
+        returnedItem?.delete()
+        so.delete()
+        vectorItem.delete()
+    }
 })
 
 test('numeric metadata preserves fractions and values outside int32 range', () => {
@@ -170,6 +228,14 @@ test('numeric metadata preserves fractions and values outside int32 range', () =
     expect(metadata.fractional).toBe(42.5)
     expect(metadata.above_int32).toBe(2147483648)
     expect(metadata.below_int32).toBe(-2147483649)
+
+    const serialized = JSON.parse(opentimelineio.serialize_json_to_string(so))
+    expect(serialized.metadata).toEqual({
+        integer: 42,
+        fractional: 42.5,
+        above_int32: 2147483648,
+        below_int32: -2147483649
+    })
 
     so.delete()
 })
