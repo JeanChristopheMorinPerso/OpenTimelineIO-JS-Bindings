@@ -10,8 +10,11 @@ concurrency:
 
 jobs:
   test:
-    name: Test
+    name: Test (${{ matrix.build-type }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build-type: [Release, Debug]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -33,9 +36,9 @@ jobs:
         id: emscripten-cache
         with:
           path: ${{ github.workspace }}/emscripten_cache
-          key: ${{ runner.os }}-emscripten-${{ steps.emscripten-version.outputs.version }}
+          key: ${{ runner.os }}-emscripten-${{ steps.emscripten-version.outputs.version }}-${{ matrix.build-type }}
 
-      - run: make build
+      - run: make build BUILD_TYPE=${{ matrix.build-type }}
         name: Build
         env:
           EM_CACHE: ${{ github.workspace }}/emscripten_cache
@@ -49,7 +52,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         name: Upload artifacts
         with:
-          name: opentimelineio
+          name: opentimelineio-${{ matrix.build-type }}
           path: install/
         if: success() || failure()
 
