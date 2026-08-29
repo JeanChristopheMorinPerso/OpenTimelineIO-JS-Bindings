@@ -20,6 +20,7 @@
 
 #include "exceptions.h"
 #include "js_anyDictionary.h" // Needed to support ems::val(AnyDictionary)
+#include "js_anyVector.h"     // Needed to support ems::val(AnyVector)
 #include "utils.h"
 
 namespace ems = emscripten;
@@ -45,7 +46,7 @@ _build_any_to_js_dispatch_table()
         return ems::val(OTIO_NS::safely_cast_int_any(a));
     };
     t[&typeid(int64_t)] = [](linb::any const& a, bool) {
-        return ems::val(OTIO_NS::safely_cast_int64_any(a));
+        return ems::val(static_cast<double>(OTIO_NS::safely_cast_int64_any(a)));
     };
     t[&typeid(uint64_t)] = [](linb::any const& a, bool) {
         return ems::val(OTIO_NS::safely_cast_uint64_any(a));
@@ -131,7 +132,7 @@ any_to_js(linb::any const& a, bool top_level)
     }
     else if (tInfo == typeid(int64_t))
     {
-        return ems::val(OTIO_NS::safely_cast_int64_any(a));
+        return ems::val(static_cast<double>(OTIO_NS::safely_cast_int64_any(a)));
     }
     else if (tInfo == typeid(uint64_t))
     {
@@ -167,6 +168,11 @@ any_to_js(linb::any const& a, bool top_level)
         OTIO_NS::SerializableObject* so = OTIO_NS::safely_cast_retainer_any(a);
         return ems::val(so, ems::allow_raw_pointers());
     }
+    else if (tInfo == typeid(OTIO_NS::AnyVector))
+    {
+        OTIO_NS::AnyVector& v = OTIO_NS::temp_safely_cast_any_vector_any(a);
+        return ems::val(v);
+    }
     else if (tInfo == typeid(OTIO_NS::AnyDictionary))
     {
         OTIO_NS::AnyDictionary& d =
@@ -194,6 +200,15 @@ EM_JS(char*, get_real_js_type, (ems::EM_VAL handle), {
 });
 // clang-format on
 
+// https://emscripten.org/docs/api_reference/emscripten.h.html?highlight=em_js#c.EM_JS
+// clang-format off
+// Check if value is an instance of SerializableObject.
+EM_JS(bool, is_serializable, (ems::EM_VAL handle), {
+    var value = Emval.toValue(handle);
+    return value instanceof Module.SerializableObject;
+});
+// clang-format on
+
 linb::any
 js_to_any(ems::val const& item)
 {
@@ -217,7 +232,7 @@ js_to_any(ems::val const& item)
             && item <= ems::val(std::numeric_limits<int32_t>::max())
             && item >= ems::val(std::numeric_limits<int32_t>::min()))
         {
-            return linb::any(js_to_cpp<int32_t>(item));
+            return linb::any(static_cast<int64_t>(js_to_cpp<int32_t>(item)));
         }
         return linb::any(js_to_cpp<double>(item));
     }
@@ -236,8 +251,6 @@ js_to_any(ems::val const& item)
     std::string jsType  = std::string(rawType);
     free(rawType);
 
-    // TODO: Do we need to be able to handle SerializableObject?
-
     if (jsType == "RationalTime")
     {
         OTIO_NS::RationalTime rt = item.as<OTIO_NS::RationalTime>();
@@ -254,6 +267,13 @@ js_to_any(ems::val const& item)
     {
         OTIO_NS::TimeTransform tt = item.as<OTIO_NS::TimeTransform>();
         return linb::any(tt);
+    }
+
+    if (is_serializable(item.as_handle()))
+    {
+        OTIO_NS::SerializableObject::Retainer<> r(
+            item.as<OTIO_NS::SerializableObject*>(ems::allow_raw_pointers()));
+        return OTIO_NS::create_safely_typed_any(r.take_value());
     }
 
     if (item.typeOf().as<std::string>() == "object")
