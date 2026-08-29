@@ -11,16 +11,13 @@
  * @param TYPE Type of the object.
 */
 #define ADD_TO_STRING_TAG_PROPERTY(TYPE)                                       \
-    EM_ASM(                                                                    \
-        if (Module[#TYPE])                                                      \
-        {                                                                       \
-            Object.defineProperty(Module[#TYPE].prototype, Symbol.toStringTag, \
-                {                                                               \
-                    value : #TYPE,                                              \
-                    writable : false,                                           \
-                    configurable : false,                                       \
-                    enumerable : false                                          \
-                });                                                             \
-        });
+    EM_ASM(if (Module[#TYPE]) {                                                \
+        Object.defineProperty(Module[#TYPE].prototype, Symbol.toStringTag, {   \
+            value : #TYPE,                                                     \
+            writable : false,                                                  \
+            configurable : false,                                              \
+            enumerable : false                                                 \
+        });                                                                    \
+    });
 
 #endif // JS_COMMON_UTILS_H

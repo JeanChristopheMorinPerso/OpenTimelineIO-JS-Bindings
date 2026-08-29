@@ -788,15 +788,14 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             }))
         .function(
             "set_media_references",
-            ems::optional_override(
-                [](OTIO_NS::Clip*     clip,
-                   ems::val const&    media_references,
-                   std::string const& new_active_key) {
-                    clip->set_media_references(
-                        media_references_from_js(media_references),
-                        new_active_key,
-                        ErrorStatusHandler());
-                }),
+            ems::optional_override([](OTIO_NS::Clip*     clip,
+                                      ems::val const&    media_references,
+                                      std::string const& new_active_key) {
+                clip->set_media_references(
+                    media_references_from_js(media_references),
+                    new_active_key,
+                    ErrorStatusHandler());
+            }),
             ems::allow_raw_pointers());
     ADD_TO_STRING_TAG_PROPERTY(Clip);
 
@@ -1462,7 +1461,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::function(
         "flatten_stack",
         ems::optional_override([](ems::val const& value) {
-            if (value.instanceof(ems::val::module_property("Stack"))) {
+            if (value.instanceof (ems::val::module_property("Stack")))
+            {
                 return OTIO_NS::flatten_stack(
                     value.as<OTIO_NS::Stack*>(ems::allow_raw_pointers()),
                     ErrorStatusHandler());
