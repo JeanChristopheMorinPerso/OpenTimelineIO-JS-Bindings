@@ -87,35 +87,28 @@ struct managing_ptr
     OTIO_NS::SerializableObject::Retainer<T> _retainer;
 };
 
+namespace emscripten { namespace internal {
+
+// Emscripten 6's default value binding copies returned class values into wire
+// storage. Preserve managing_ptr's ownership-transfer semantics instead.
+template <typename T>
+struct BindingType<managing_ptr<T>> : GenericBindingType<managing_ptr<T>>
+{
+    using Base     = GenericBindingType<managing_ptr<T>>;
+    using WireType = typename Base::WireType;
+    using Base::toWireType;
+
+    static WireType toWireType(managing_ptr<T>&& value, rvp::default_tag)
+    {
+        return new managing_ptr<T>(std::move(value));
+    }
+};
+
+}} // namespace emscripten::internal
+
 template <typename V, typename VALUE_TYPE = typename V::value_type>
 struct JSMutableSequence : public V
 {
-    class Iterator
-    {
-    public:
-        Iterator(V& v)
-            : _v(v)
-            , _it(0)
-        {}
-
-        ems::val next()
-        {
-            ems::val result = ems::val::object();
-            if (_it == _v.size())
-            {
-                result.set("done", true);
-                return result;
-            }
-
-            result.set("value", _v[_it++].value);
-            return result;
-        }
-
-    private:
-        V&     _v;
-        size_t _it;
-    };
-
     VALUE_TYPE
     at(int index)
     {
@@ -186,19 +179,14 @@ struct JSMutableSequence : public V
 
     int length() const { return static_cast<int>(this->size()); }
 
-    Iterator* iter() { return new Iterator(static_cast<V&>(*this)); }
-
-    static void define_js_class(const char* name, const char* iteratorName)
+    static void define_js_class(const char* name)
     {
         typedef JSMutableSequence This;
-
-        // TODO: tsembind generates garante names with this...
-        ems::class_<This::Iterator>(iteratorName)
-            .function("next", &This::Iterator::next);
 
         ems::class_<This>(name)
             .template constructor<>()
             .property("length", &This::length)
+            .function("size", &This::length)
             .function("at", &This::at, ems::allow_raw_pointers())
             .function("push", &This::push, ems::allow_raw_pointers())
             // TODO: Support concat
@@ -208,7 +196,7 @@ struct JSMutableSequence : public V
             // TODO: Support slice
             // TODO: Support splice
             // TODO: Support values
-            .function("@@iterator", &This::iter, ems::allow_raw_pointers());
+            .template iterable<ems::val>("size", "at");
     }
 };
 

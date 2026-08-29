@@ -26,7 +26,6 @@ endif()
 string(APPEND JS_LINK_FLAGS " -I${CMAKE_SOURCE_DIR}/deps/OpenTimelineIO/src \
     -sWASM=1 \
     -sMODULARIZE=1 \
-    -sUSE_ES6_IMPORT_META=0 \
     -sEXPORT_NAME='OpenTimelineIO' \
     -sMEMORY_GROWTH_LINEAR_STEP=32MB \
     -sALLOW_MEMORY_GROWTH=1 \
@@ -51,14 +50,43 @@ endif()
 
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 if (CMAKE_BUILD_TYPE MATCHES Debug)
-    string(APPEND JS_LINK_FLAGS "--bind -O0 -g3 -gsource-map -fsanitize=address --source-map-base http://localhost:8000/install/ --profile ")
+    string(APPEND JS_LINK_FLAGS "-lembind -O0 -g3 -gsource-map -fsanitize=address --source-map-base http://localhost:8000/install/ --profile ")
 else()
-    string(APPEND JS_LINK_FLAGS "-flto -Os --bind ")
+    string(APPEND JS_LINK_FLAGS "-flto -Os -lembind ")
     string(APPEND JS_COMPILE_FLAGS "-flto -Os ")
 endif()
 
 message(STATUS "JS_LINK_FLAGS: ${JS_LINK_FLAGS}")
 message(STATUS "JS_COMPILE_FLAGS: ${JS_COMPILE_FLAGS}")
+
+set(ENSURE_TSD_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/ensure_tsd.cmake")
+file(WRITE "${ENSURE_TSD_SCRIPT}" [=[
+if(NOT EXISTS "${TSD}")
+    file(TOUCH "${STAMP}")
+endif()
+]=])
+
+function(emit_typescript_declarations target output)
+    set(stamp "${CMAKE_CURRENT_BINARY_DIR}/${target}-tsd.stamp")
+    if(NOT EXISTS "${stamp}")
+        file(TOUCH "${stamp}")
+    endif()
+
+    target_link_options(${target} PRIVATE "--emit-tsd" "${output}")
+    add_custom_target(${target}-check-tsd
+        COMMAND ${CMAKE_COMMAND}
+            "-DTSD=${output}"
+            "-DSTAMP=${stamp}"
+            -P "${ENSURE_TSD_SCRIPT}"
+        VERBATIM
+    )
+    add_dependencies(${target} ${target}-check-tsd)
+    set_property(TARGET ${target} APPEND PROPERTY LINK_DEPENDS "${stamp}")
+    add_custom_command(TARGET ${target} POST_BUILD
+        BYPRODUCTS "${output}"
+        COMMAND ${CMAKE_COMMAND} -E true
+    )
+endfunction()
 
 # Opentime
 set(OPENTIME_SRC ${CMAKE_CURRENT_SOURCE_DIR}/opentime)
@@ -89,13 +117,8 @@ target_include_directories(opentime-js
     PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src/deps/optional-lite/include"
 )
 
-add_custom_target(opentime-ts
-    ALL
-    DEPENDS opentime-js
-    COMMAND ${CMAKE_COMMAND} -E echo "Creating TypeScript declarations $<TARGET_FILE_DIR:opentime-js>/$<TARGET_FILE_BASE_NAME:opentime-js>.d.ts"
-    COMMAND npx tsembind $<TARGET_FILE:opentime-js> > $<TARGET_FILE_DIR:opentime-js>/$<TARGET_FILE_BASE_NAME:opentime-js>.d.ts
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-)
+set(OPENTIME_TSD "${CMAKE_CURRENT_BINARY_DIR}/opentime.d.ts")
+emit_typescript_declarations(opentime-js "${OPENTIME_TSD}")
 
 # Opentimelineio
 set(OPENTIMELINEIO_SRC ${CMAKE_CURRENT_SOURCE_DIR}/opentimelineio)
@@ -132,19 +155,14 @@ target_include_directories(opentimelineio-js
     PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src/deps/optional-lite/include"
 )
 
-add_custom_target(opentimelineio-ts
-    ALL
-    DEPENDS opentimelineio-js
-    COMMAND ${CMAKE_COMMAND} -E echo "Creating TypeScript declarations $<TARGET_FILE_DIR:opentimelineio-js>/$<TARGET_FILE_BASE_NAME:opentimelineio-js>.d.ts"
-    COMMAND npx tsembind $<TARGET_FILE:opentimelineio-js> > $<TARGET_FILE_DIR:opentimelineio-js>/$<TARGET_FILE_BASE_NAME:opentimelineio-js>.d.ts
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-)
+set(OPENTIMELINEIO_TSD "${CMAKE_CURRENT_BINARY_DIR}/opentimelineio.d.ts")
+emit_typescript_declarations(opentimelineio-js "${OPENTIMELINEIO_TSD}")
 
 # Install
 install(TARGETS opentime-js DESTINATION ${CMAKE_INSTALL_PREFIX})
-install(FILES $<TARGET_FILE_DIR:opentime-js>/$<TARGET_FILE_BASE_NAME:opentime-js>.d.ts DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES "${OPENTIME_TSD}" DESTINATION ${CMAKE_INSTALL_PREFIX})
 install(TARGETS opentimelineio-js DESTINATION ${CMAKE_INSTALL_PREFIX})
-install(FILES $<TARGET_FILE_DIR:opentimelineio-js>/$<TARGET_FILE_BASE_NAME:opentimelineio-js>.d.ts DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES "${OPENTIMELINEIO_TSD}" DESTINATION ${CMAKE_INSTALL_PREFIX})
 install(FILES ${CMAKE_BINARY_DIR}/src/opentime.wasm DESTINATION ${CMAKE_INSTALL_PREFIX})
 install(FILES ${CMAKE_BINARY_DIR}/src/opentimelineio.wasm DESTINATION ${CMAKE_INSTALL_PREFIX})
 if (CMAKE_BUILD_TYPE MATCHES Debug)

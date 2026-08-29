@@ -43,7 +43,6 @@
 #include "errorStatusHandler.h"
 #include "js_any.h"
 #include "js_anyDictionary.h"
-#include "js_optional.h"
 #include "utils.h"
 
 namespace ems = emscripten;
@@ -80,6 +79,37 @@ static const std::string DEFAULT_MEDIA_KEY = "DEFAULT_MEDIA";
 
 // clang-format off
 namespace {
+
+    ems::val media_references_to_js(OTIO_NS::Clip::MediaReferences const& references) {
+        ems::val result = ems::val::object();
+        for (auto const& [key, reference] : references) {
+            result.set(key, reference, ems::allow_raw_pointers());
+        }
+        return result;
+    }
+
+    OTIO_NS::Clip::MediaReferences media_references_from_js(ems::val const& value) {
+        OTIO_NS::Clip::MediaReferences result;
+        ems::val entries = ems::val::global("Object").call<ems::val>("entries", value);
+        for (size_t i = 0; i < entries["length"].as<size_t>(); ++i) {
+            result[entries[i][0].as<std::string>()] =
+                entries[i][1].as<OTIO_NS::MediaReference*>(ems::allow_raw_pointers());
+        }
+        return result;
+    }
+
+    ems::val label_to_schema_version_map_to_js(
+        OTIO_NS::label_to_schema_version_map const& labels) {
+        ems::val result = ems::val::object();
+        for (auto const& [label, versions] : labels) {
+            ems::val js_versions = ems::val::object();
+            for (auto const& [schema, version] : versions) {
+                js_versions.set(schema, version);
+            }
+            result.set(label, js_versions);
+        }
+        return result;
+    }
 
     // template<typename T>
     // std::vector<T*> vector_or_default(optional<std::vector<T*>> item) {
@@ -185,43 +215,15 @@ make_managing_ptr(Targs&&... args)
     return managing_ptr<T>(new T(std::forward<Targs>(args)...));
 }
 
-template <typename CONTAINER>
-class ContainerIterator
-{
-public:
-    ContainerIterator(CONTAINER* container)
-        : _container(container)
-        , _it(0)
-    {}
-
-    ContainerIterator* iter() { return this; }
-
-    ems::val next()
-    {
-        printf("ContainerIterator::next start\n");
-        ems::val result = ems::val::object();
-        if (_it == _container->children().size())
-        {
-            result.set("done", true);
-            printf("ContainerIterator::next done\n");
-            return result;
-        }
-
-        result.set("value", _container->children()[_it++].value);
-        printf("ContainerIterator::next returning value\n");
-        return result;
-    }
-
-private:
-    CONTAINER* _container;
-    size_t     _it;
-};
-
 EMSCRIPTEN_BINDINGS(opentimelineio)
 {
     ems::function(
         "_serializable_object_wrapper_destructor_count",
         &SerializableObjectWrapper::destructor_count);
+    ems::register_optional<OTIO_NS::TimeRange>();
+    ems::register_optional<Imath::Box2d>();
+    ems::register_vector<OTIO_NS::Composable*>("ComposableVector");
+    ems::register_vector<OTIO_NS::Track*>("TrackVector");
 
     ems::class_<OTIO_NS::SerializableObject>("SerializableObject")
         .smart_ptr_constructor(
@@ -415,13 +417,6 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     // TODO: Use custom unmarshaling? When I tried, it wasn't even compiling.
     ems::register_vector<OTIO_NS::SerializableObject*>("SOVector");
 
-    using SerializableCollectionIterator =
-        ContainerIterator<OTIO_NS::SerializableCollection>;
-
-    ems::class_<SerializableCollectionIterator>(
-        "SerializableCollectionIterator")
-        .function("next", &SerializableCollectionIterator::next);
-
     // TODO: Implement and continue tests.
     ems::class_<
         OTIO_NS::SerializableCollection,
@@ -459,11 +454,19 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                     return sc.children().size();
                 }))
         .function(
-            "@@iterator",
-            ems::optional_override([](OTIO_NS::SerializableCollection* sc) {
-                return new SerializableCollectionIterator(sc);
-            }),
+            "size",
+            ems::optional_override(
+                [](OTIO_NS::SerializableCollection const& sc) {
+                    return sc.children().size();
+                }))
+        .function(
+            "at",
+            ems::optional_override(
+                [](OTIO_NS::SerializableCollection const& sc, size_t index) {
+                    return sc.children().at(index).value;
+                }),
             ems::allow_raw_pointers())
+        .iterable<ems::val>("size", "at")
         .function(
             "get_children",
             ems::optional_override(
@@ -568,12 +571,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         std::vector<OTIO_NS::SerializableObject::Retainer<OTIO_NS::Marker>>,
         OTIO_NS::Marker*>;
 
-    EffectVectorProxy::define_js_class(
-        "EffectVectorProxy",
-        "EffectVectorProxyIterator");
-    MarkerVectorProxy::define_js_class(
-        "MarkerVectorProxy",
-        "MarkerVectorProxyIterator");
+    EffectVectorProxy::define_js_class("EffectVectorProxy");
+    MarkerVectorProxy::define_js_class("MarkerVectorProxy");
 
     ems::class_<OTIO_NS::Item, ems::base<OTIO_NS::Composable>>("Item")
         .smart_ptr<managing_ptr<OTIO_NS::Item>>("Item")
@@ -782,18 +781,21 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                         new_active_key,
                         ErrorStatusHandler());
                 }))
-        .function("media_references", &OTIO_NS::Clip::media_references)
+        .function(
+            "media_references",
+            ems::optional_override([](OTIO_NS::Clip const& clip) {
+                return media_references_to_js(clip.media_references());
+            }))
         .function(
             "set_media_references",
-            ems::optional_override(
-                [](OTIO_NS::Clip*                        clip,
-                   OTIO_NS::Clip::MediaReferences const& media_references,
-                   std::string const&                    new_active_key) {
-                    clip->set_media_references(
-                        media_references,
-                        new_active_key,
-                        ErrorStatusHandler());
-                }),
+            ems::optional_override([](OTIO_NS::Clip*     clip,
+                                      ems::val const&    media_references,
+                                      std::string const& new_active_key) {
+                clip->set_media_references(
+                    media_references_from_js(media_references),
+                    new_active_key,
+                    ErrorStatusHandler());
+            }),
             ems::allow_raw_pointers());
     ADD_TO_STRING_TAG_PROPERTY(Clip);
 
@@ -888,7 +890,16 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                    OTIO_NS::Track::NeighborGapPolicy policy) {
                     auto result =
                         t.neighbors_of(&item, ErrorStatusHandler(), policy);
-                    return result;
+                    ems::val neighbors = ems::val::array();
+                    neighbors.set(
+                        0,
+                        result.first.value,
+                        ems::allow_raw_pointers());
+                    neighbors.set(
+                        1,
+                        result.second.value,
+                        ems::allow_raw_pointers());
+                    return neighbors;
                 }));
 
     ADD_TO_STRING_TAG_PROPERTY(Track);
@@ -1442,23 +1453,23 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                   }));
 
     ems::function("release_to_schema_version_map", ems::optional_override([]() {
-                      return OTIO_NS::label_to_schema_version_map(
+                      return label_to_schema_version_map_to_js(
                           OTIO_NS::CORE_VERSION_MAP);
                   }));
 
     // TODO: Test
     ems::function(
         "flatten_stack",
-        ems::optional_override([](OTIO_NS::Stack* stack) {
-            return OTIO_NS::flatten_stack(stack, ErrorStatusHandler());
-        }),
-        ems::allow_raw_pointers());
-
-    // TODO: Test
-    ems::function(
-        "flatten_stack",
-        ems::optional_override([](std::vector<OTIO_NS::Track*> tracks) {
-            return OTIO_NS::flatten_stack(tracks, ErrorStatusHandler());
+        ems::optional_override([](ems::val const& value) {
+            if (value.instanceof (ems::val::module_property("Stack")))
+            {
+                return OTIO_NS::flatten_stack(
+                    value.as<OTIO_NS::Stack*>(ems::allow_raw_pointers()),
+                    ErrorStatusHandler());
+            }
+            return OTIO_NS::flatten_stack(
+                value.as<std::vector<OTIO_NS::Track*>>(),
+                ErrorStatusHandler());
         }),
         ems::allow_raw_pointers());
 

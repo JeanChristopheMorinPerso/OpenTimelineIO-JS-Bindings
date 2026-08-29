@@ -78,6 +78,10 @@ test('test_serialize', () => {
     expectError('type mismatch while decoding: Expected a SerializableObject*, found object of type \'opentimelineio::v1_0::AnyDictionary\' instead', () => {
         opentimelineio.SerializableObject.from_json_string('{}')
     })
+
+    expectError('Unsupported value type: function', () => {
+        opentimelineio.serialize_json_to_file(() => {}, '/unsupported.json')
+    })
 })
 
 // TODO: Add more metadata (cover all possible types)

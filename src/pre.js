@@ -24,14 +24,16 @@ Module.onRuntimeInitialized = function () {
         }
     }
 
-    invalidateWrapperOnDestruction(
-        Module.SerializableObject,
-        Module.SerializableObjectWrapper
-    )
-    invalidateWrapperOnDestruction(
-        Module.SerializableObjectWithMetadata,
-        Module.SerializableObjectWithMetadataWrapper
-    )
+    if (Module.SerializableObject) {
+        invalidateWrapperOnDestruction(
+            Module.SerializableObject,
+            Module.SerializableObjectWrapper
+        )
+        invalidateWrapperOnDestruction(
+            Module.SerializableObjectWithMetadata,
+            Module.SerializableObjectWithMetadataWrapper
+        )
+    }
 
     Module.serializable_field = function (klass, name, required_type) {
         Object.defineProperty(klass.prototype, name, {

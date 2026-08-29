@@ -158,12 +158,12 @@ any_to_js(linb::any const& a, bool top_level)
     else if (tInfo == typeid(OTIO_NS::AnyDictionary*))
     {
         OTIO_NS::AnyDictionary* d = linb::any_cast<OTIO_NS::AnyDictionary*>(a);
-        return ems::val(d);
+        return ems::val(d, ems::allow_raw_pointers());
     }
     else if (tInfo == typeid(OTIO_NS::SerializableObject::Retainer<>))
     {
         OTIO_NS::SerializableObject* so = OTIO_NS::safely_cast_retainer_any(a);
-        return ems::val(so);
+        return ems::val(so, ems::allow_raw_pointers());
     }
     else if (tInfo == typeid(OTIO_NS::AnyDictionary))
     {
@@ -195,7 +195,7 @@ EM_JS(char*, get_real_js_type, (ems::EM_VAL handle), {
 linb::any
 js_to_any(ems::val const& item)
 {
-    std::string typ = item.typeof().as<std::string>();
+    std::string typ = item.typeOf().as<std::string>();
 
     if (item.isNull() || item.isUndefined())
     {
@@ -254,7 +254,7 @@ js_to_any(ems::val const& item)
     }
 
     throw TypeError(
-        "Unsupported value type: " + item.typeof().as<std::string>());
+        "Unsupported value type: " + item.typeOf().as<std::string>());
 }
 
 template <typename T>
@@ -290,7 +290,7 @@ js_map_to_cpp(ems::val const& m)
 
             throw ValueError(
                 "Keys must be of type string, not "
-                + m[i][0].typeof().as<std::string>());
+                + m[i][0].typeOf().as<std::string>());
         }
 
         d[keys[i][0].as<std::string>()] = js_to_any(keys[i][1]);
@@ -320,7 +320,7 @@ struct KeepaliveMonitor
             {
                 // printf(
                 //     "KeepaliveMonitor::monitor: _keep_alive is empty, setting it\n");
-                _keep_alive = ems::val(_so);
+                _keep_alive = ems::val(_so, ems::allow_raw_pointers());
                 // printf(
                 //     "KeepaliveMonitor::monitor: Successfully set _keep_alive\n");
             }

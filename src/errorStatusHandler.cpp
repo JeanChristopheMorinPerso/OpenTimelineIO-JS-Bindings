@@ -78,7 +78,7 @@ ErrorStatusHandler::details()
     return std::format(
         "{}: {}",
         error_status.details,
-        ems::val(error_status.object_details)
+        ems::val(error_status.object_details, ems::allow_raw_pointers())
             .call<ems::val>("toString")
             .as<std::string>());
 }
@@ -94,7 +94,7 @@ ErrorStatusHandler::full_details()
     return std::format(
         "{}: {}",
         error_status.full_description,
-        ems::val(error_status.object_details)
+        ems::val(error_status.object_details, ems::allow_raw_pointers())
             .call<ems::val>("toString")
             .as<std::string>());
 }
