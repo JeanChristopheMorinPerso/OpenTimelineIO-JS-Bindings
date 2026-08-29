@@ -217,6 +217,9 @@ make_managing_ptr(Targs&&... args)
 
 EMSCRIPTEN_BINDINGS(opentimelineio)
 {
+    ems::register_type<SchemaVersionMap>(
+        "SchemaVersionMap",
+        "Readonly<Record<string, number>>");
     ems::function(
         "_serializable_object_wrapper_destructor_count",
         &SerializableObjectWrapper::destructor_count);
@@ -251,12 +254,14 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         // Don't override Emscripten's own clone method. Emscripten's clone
         // is not a copy, it creates a references which points to the same C++ object.
         // clone is similar to when compiling OTIO with INSTANCING_SUPPORT I guess? Not sure.
-        // TODO: This crashes. Stacktrace can be seen when cimpiling in Debug mode
-        // and running the tests.
         .function(
             "clone_otio",
             ems::optional_override([](OTIO_NS::SerializableObject* so) {
-                return so->clone(ErrorStatusHandler());
+                // Keep this as a separate statement: clone() may return nullptr,
+                // and ErrorStatusHandler must throw before managing_ptr tries to
+                // take ownership of that result.
+                auto* clone = so->clone(ErrorStatusHandler());
+                return managing_ptr<OTIO_NS::SerializableObject>(clone);
             }),
             ems::allow_raw_pointers())
         .function(
