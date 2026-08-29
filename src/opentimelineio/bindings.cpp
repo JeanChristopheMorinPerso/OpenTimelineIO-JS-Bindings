@@ -164,19 +164,6 @@ namespace {
 } // namespace
 // clang-format on
 
-static OTIO_NS::schema_version_map
-schema_version_map_from_js(ems::val const& value)
-{
-    OTIO_NS::schema_version_map result;
-    ems::val entries =
-        ems::val::global("Object").call<ems::val>("entries", value);
-    for (size_t i = 0; i < entries["length"].as<size_t>(); ++i)
-    {
-        result[entries[i][0].as<std::string>()] = entries[i][1].as<int>();
-    }
-    return result;
-}
-
 // REGISTER_WRAPPER normally generates this type. It is written out here so the
 // lifecycle tests can count actual C++ destructor calls instead of only
 // checking whether Embind invalidated the JavaScript handle.
@@ -230,6 +217,9 @@ make_managing_ptr(Targs&&... args)
 
 EMSCRIPTEN_BINDINGS(opentimelineio)
 {
+    ems::register_type<SchemaVersionMap>(
+        "SchemaVersionMap",
+        "Readonly<Record<string, number>>");
     ems::function(
         "_serializable_object_wrapper_destructor_count",
         &SerializableObjectWrapper::destructor_count);
@@ -1350,13 +1340,12 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::function(
         "_serialize_RationalTime_to_string",
         ems::optional_override(
-            [](JSAnyRationalTime const& art,
-               ems::val const&          schema_version_target,
-               int                      indent) {
-                auto versions = schema_version_map_from_js(schema_version_target);
+            [](JSAnyRationalTime const&           art,
+               OTIO_NS::schema_version_map const& schema_version_target,
+               int                                indent) {
                 return OTIO_NS::serialize_json_to_string(
                     art.a,
-                    &versions,
+                    &schema_version_target,
                     ErrorStatusHandler(),
                     indent);
             }));
@@ -1364,13 +1353,12 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::function(
         "_serialize_TimeRange_to_string",
         ems::optional_override(
-            [](JSAnyTimeRange const& atr,
-               ems::val const&       schema_version_target,
-               int                   indent) {
-                auto versions = schema_version_map_from_js(schema_version_target);
+            [](JSAnyTimeRange const&              atr,
+               OTIO_NS::schema_version_map const& schema_version_target,
+               int                                indent) {
                 return OTIO_NS::serialize_json_to_string(
                     atr.a,
-                    &versions,
+                    &schema_version_target,
                     ErrorStatusHandler(),
                     indent);
             }));
@@ -1378,13 +1366,12 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::function(
         "_serialize_TimeTransform_to_string",
         ems::optional_override(
-            [](JSAnyTimeTransform const& att,
-               ems::val const&           schema_version_target,
-               int                       indent) {
-                auto versions = schema_version_map_from_js(schema_version_target);
+            [](JSAnyTimeTransform const&          att,
+               OTIO_NS::schema_version_map const& schema_version_target,
+               int                                indent) {
                 return OTIO_NS::serialize_json_to_string(
                     att.a,
-                    &versions,
+                    &schema_version_target,
                     ErrorStatusHandler(),
                     indent);
             }));
@@ -1392,13 +1379,12 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::function(
         "_serialize_SerializableObject_to_string",
         ems::optional_override(
-            [](JSAnySerializableObject const& aso,
-               ems::val const&                schema_version_target,
-               int                            indent) {
-                auto versions = schema_version_map_from_js(schema_version_target);
+            [](JSAnySerializableObject const&     aso,
+               OTIO_NS::schema_version_map const& schema_version_target,
+               int                                indent) {
                 return OTIO_NS::serialize_json_to_string(
                     aso.a,
-                    &versions,
+                    &schema_version_target,
                     ErrorStatusHandler(),
                     indent);
             }));
@@ -1416,29 +1402,27 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::function(
         "serialize_json_to_file",
         ems::optional_override(
-            [](ems::val        data,
-               std::string     filename,
-               ems::val const& schema_version_targets) {
-                auto versions = schema_version_map_from_js(schema_version_targets);
+            [](ems::val                           data,
+               std::string                        filename,
+               OTIO_NS::schema_version_map const& schema_version_targets) {
                 return OTIO_NS::serialize_json_to_file(
                     js_to_any(data),
                     filename,
-                    &versions,
+                    &schema_version_targets,
                     ErrorStatusHandler());
             }));
 
     ems::function(
         "serialize_json_to_file",
         ems::optional_override(
-            [](ems::val        data,
-               std::string     filename,
-               ems::val const& schema_version_targets,
-               int             indent) {
-                auto versions = schema_version_map_from_js(schema_version_targets);
+            [](ems::val                           data,
+               std::string                        filename,
+               OTIO_NS::schema_version_map const& schema_version_targets,
+               int                                indent) {
                 return OTIO_NS::serialize_json_to_file(
                     js_to_any(data),
                     filename,
-                    &versions,
+                    &schema_version_targets,
                     ErrorStatusHandler(),
                     indent);
             }));

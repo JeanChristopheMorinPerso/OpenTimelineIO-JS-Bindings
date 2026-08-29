@@ -38,6 +38,8 @@ test('test_schema_version_target', () => {
     const clip = new opentimelineio.Clip('downgrade')
 
     try {
+        expect(opentimelineio.type_version_map().Clip).toBe(2)
+
         const current = opentimelineio.serialize_json_to_string(clip)
         expect(JSON.parse(current).OTIO_SCHEMA).toBe('Clip.2')
 

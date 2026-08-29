@@ -15,6 +15,8 @@
 
 #include "utils.h"
 
+EMSCRIPTEN_DECLARE_VAL_TYPE(SchemaVersionMap);
+
 namespace emscripten { namespace internal {
 
 template <>
@@ -74,25 +76,71 @@ struct BindingType<OTIO_NS::AnyDictionary>
 template <>
 struct TypeID<std::unordered_map<std::string, int64_t>>
 {
-    static constexpr TYPEID get() { return LightTypeID<val>::get(); }
+    static constexpr TYPEID get()
+    {
+        return LightTypeID<SchemaVersionMap>::get();
+    }
 };
 
 template <>
 struct TypeID<const std::unordered_map<std::string, int64_t>>
 {
-    static constexpr TYPEID get() { return LightTypeID<val>::get(); }
+    static constexpr TYPEID get()
+    {
+        return LightTypeID<SchemaVersionMap>::get();
+    }
 };
 
 template <>
 struct TypeID<std::unordered_map<std::string, int64_t>&>
 {
-    static constexpr TYPEID get() { return LightTypeID<val>::get(); }
+    static constexpr TYPEID get()
+    {
+        return LightTypeID<SchemaVersionMap>::get();
+    }
 };
 
 template <>
 struct TypeID<const std::unordered_map<std::string, int64_t>&>
 {
-    static constexpr TYPEID get() { return LightTypeID<val>::get(); }
+    static constexpr TYPEID get()
+    {
+        return LightTypeID<SchemaVersionMap>::get();
+    }
+};
+
+template <>
+struct BindingType<std::unordered_map<std::string, int64_t>>
+{
+    using Map        = std::unordered_map<std::string, int64_t>;
+    using ValBinding = BindingType<SchemaVersionMap>;
+    using WireType   = ValBinding::WireType;
+
+    // TypeID makes JavaScript use the val converter, so BindingType must use
+    // the same wire representation. Otherwise the Emval handle is mistaken
+    // for a Map pointer, which only appeared to work when low memory was zero.
+    static WireType toWireType(Map const& data, rvp::default_tag policy)
+    {
+        SchemaVersionMap obj(val::object());
+        for (auto const& [key, value]: data)
+        {
+            obj.set(key, static_cast<int>(value));
+        }
+        return ValBinding::toWireType(std::move(obj), policy);
+    }
+
+    static Map fromWireType(WireType value)
+    {
+        Map result;
+        val entries = val::global("Object").call<val>(
+            "entries",
+            ValBinding::fromWireType(value));
+        for (size_t i = 0; i < entries["length"].as<size_t>(); ++i)
+        {
+            result[entries[i][0].as<std::string>()] = entries[i][1].as<int>();
+        }
+        return result;
+    }
 };
 
 }} // namespace emscripten::internal
