@@ -27,12 +27,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v3
+      - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
+        name: Install pnpm and Node.js
         with:
-          node-version: 19
+          runtime: node@20
+          cache: true
+          install: false
 
-      - run: npm install
+      - run: pnpm install --frozen-lockfile
         name: Install dependencies
 
-      - run: npx eslint .
+      - run: pnpm exec eslint .
         name: ESLint

@@ -5,8 +5,8 @@ Javascript bindings.
 
 ## Prerequisites
 
-- Node 17 or higher ([https://nodejs.org/en/download](https://nodejs.org/en/download))
-
+- Node 20 or higher ([https://nodejs.org/en/download](https://nodejs.org/en/download))
+- [pnpm](https://pnpm.io/installation) 11 or higher
 ## Getting Started
 Follow these steps to set up and run the JS Bindings project on your local machine:
 
@@ -33,11 +33,11 @@ Right now, files will be installed in the `./install` directory. This is hardcod
 
 5. Run unit tests
 ```bash
-npm run test
+pnpm test
 ```
 
 [Jest](https://jestjs.io/) is used as a the test runner.
-Additional arguments can be passed to Jest like this: `npm test -- <additional arguments>`.
+Additional arguments can be passed to Jest like this: `pnpm test <additional arguments>`.
 
 ## State of the project
 

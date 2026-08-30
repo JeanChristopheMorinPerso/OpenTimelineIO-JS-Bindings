@@ -7,7 +7,7 @@ setup:
 	git clone https://github.com/emscripten-core/emsdk.git
 	cd emsdk && ./emsdk install $(EMSCRIPTEN_VERSION)
 	cd emsdk && ./emsdk activate $(EMSCRIPTEN_VERSION)
-	npm install
+	pnpm install --frozen-lockfile
 
 build:
 	mkdir -p build

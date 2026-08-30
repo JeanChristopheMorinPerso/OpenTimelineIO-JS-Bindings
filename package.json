@@ -1,6 +1,7 @@
 {
   "name": "opentimelineio",
   "version": "0.15.0",
+  "packageManager": "pnpm@12.1.0",
   "description": "Open Source API and interchange format for editorial timeline information.",
   "main": "index.js",
   "directories": {

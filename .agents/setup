@@ -16,11 +16,11 @@ command -v git >/dev/null 2>&1 || packages+=(git)
 command -v make >/dev/null 2>&1 || packages+=(make)
 command -v g++ >/dev/null 2>&1 || packages+=(g++)
 command -v cmake >/dev/null 2>&1 || packages+=(cmake)
+command -v curl >/dev/null 2>&1 || packages+=(curl)
 
 if ! command -v node >/dev/null 2>&1 ||
-    ! command -v npm >/dev/null 2>&1 ||
-    (( $(node --version 2>/dev/null | sed -E 's/^v([0-9]+).*/\1/' || echo 0) < 17 )); then
-    packages+=(nodejs npm)
+    (( $(node --version 2>/dev/null | sed -E 's/^v([0-9]+).*/\1/' || echo 0) < 20 )); then
+    packages+=(nodejs)
 fi
 
 if ((${#packages[@]})); then
@@ -30,6 +30,11 @@ if ((${#packages[@]})); then
 fi
 
 run_step "Initialize Git submodules" git submodule update --init --recursive
-run_step "Install JavaScript dependencies" npm install --no-audit --no-fund
+export PNPM_HOME="${PNPM_HOME:-$HOME/.local/share/pnpm}"
+export PATH="$PNPM_HOME:$PATH"
+echo "==> Install pnpm"
+# This will install the pnpm version declared in package.json
+time curl -fsSL https://get.pnpm.io/install.sh | sh -
+run_step "Install JavaScript dependencies" env CI=true pnpm install --frozen-lockfile
 
 echo "==> Orb setup complete"
