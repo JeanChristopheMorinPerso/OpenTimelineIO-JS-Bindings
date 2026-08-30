@@ -13,7 +13,6 @@ run_step() {
 
 packages=()
 command -v git >/dev/null 2>&1 || packages+=(git)
-command -v curl >/dev/null 2>&1 || packages+=(curl ca-certificates)
 command -v make >/dev/null 2>&1 || packages+=(make)
 command -v g++ >/dev/null 2>&1 || packages+=(g++)
 command -v cmake >/dev/null 2>&1 || packages+=(cmake)
@@ -32,31 +31,5 @@ fi
 
 run_step "Initialize Git submodules" git submodule update --init --recursive
 run_step "Install JavaScript dependencies" npm install --no-audit --no-fund
-
-emscripten_version="$(make --no-print-directory emscripten-version)"
-if [[ ! -d emsdk/.git ]]; then
-    run_step "Clone the Emscripten SDK" \
-        git clone https://github.com/emscripten-core/emsdk.git emsdk
-fi
-run_step "Install Emscripten ${emscripten_version}" \
-    ./emsdk/emsdk install "$emscripten_version"
-run_step "Activate Emscripten ${emscripten_version}" \
-    ./emsdk/emsdk activate "$emscripten_version"
-
-# Make the repository-scoped SDK available to Amp and supervised services, which
-# start in fresh non-interactive login shells after setup has exited.
-profile_marker="# opentimelineio-js-bindings Emscripten environment"
-if ! grep -Fqx "$profile_marker" "$HOME/.bash_profile" 2>/dev/null; then
-    cat >> "$HOME/.bash_profile" <<EOF
-
-$profile_marker
-if [[ "\${PWD}" == "$repo_root" && "\${OTIO_JS_EMSDK_ACTIVE:-}" != 1 && -f "$repo_root/emsdk/emsdk_env.sh" ]]; then
-    export OTIO_JS_EMSDK_ACTIVE=1
-    export EMSDK_QUIET=1
-    # shellcheck disable=SC1091
-    source "$repo_root/emsdk/emsdk_env.sh" >/dev/null
-fi
-EOF
-fi
 
 echo "==> Orb setup complete"
