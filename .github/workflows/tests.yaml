@@ -52,7 +52,7 @@ jobs:
       - run: pnpm test
         name: Test
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         name: Upload artifacts
         with:
           name: opentimelineio-${{ matrix.build-type }}
