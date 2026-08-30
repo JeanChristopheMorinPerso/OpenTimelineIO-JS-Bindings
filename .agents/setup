@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+run_step() {
+    local label="$1"
+    shift
+    echo "==> $label"
+    time "$@"
+}
+
+packages=()
+command -v git >/dev/null 2>&1 || packages+=(git)
+command -v make >/dev/null 2>&1 || packages+=(make)
+command -v g++ >/dev/null 2>&1 || packages+=(g++)
+command -v cmake >/dev/null 2>&1 || packages+=(cmake)
+
+if ! command -v node >/dev/null 2>&1 ||
+    ! command -v npm >/dev/null 2>&1 ||
+    (( $(node --version 2>/dev/null | sed -E 's/^v([0-9]+).*/\1/' || echo 0) < 17 )); then
+    packages+=(nodejs npm)
+fi
+
+if ((${#packages[@]})); then
+    run_step "Update system package index" sudo apt-get update
+    run_step "Install system packages: ${packages[*]}" \
+        sudo apt-get install -y --no-install-recommends "${packages[@]}"
+fi
+
+run_step "Initialize Git submodules" git submodule update --init --recursive
+run_step "Install JavaScript dependencies" npm install --no-audit --no-fund
+
+echo "==> Orb setup complete"
