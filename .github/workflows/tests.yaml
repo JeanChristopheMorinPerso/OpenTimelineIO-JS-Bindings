@@ -34,7 +34,7 @@ jobs:
         id: emscripten-version
         name: Get emscripten version
 
-      - uses: actions/cache/restore@v3
+      - uses: actions/cache/restore@v6
         name: Restore emscripten cache
         id: emscripten-cache
         with:
@@ -59,7 +59,7 @@ jobs:
           path: install/
         if: success() || failure()
 
-      - uses: actions/cache/save@v3
+      - uses: actions/cache/save@v6
         name: Save emscripten cache
         with:
           path: ${{ github.workspace }}/emscripten_cache
