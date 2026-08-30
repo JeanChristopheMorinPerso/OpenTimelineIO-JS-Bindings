@@ -6,3 +6,4 @@ repros
 .vscode
 scripts/*.js
 index.html
+.amp/portals/*
