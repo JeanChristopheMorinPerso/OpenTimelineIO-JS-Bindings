@@ -14,3 +14,13 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      jest:
+        patterns:
+          - "jest"
+          - "@jest/*"
+      eslint:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "@eslint/*"

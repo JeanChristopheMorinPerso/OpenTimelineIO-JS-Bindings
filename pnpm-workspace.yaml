@@ -1,0 +1,4 @@
+# Jest uses prebuilt native bindings, so these fallback build scripts are unnecessary.
+allowBuilds:
+  '@parcel/watcher': false
+  unrs-resolver: false
