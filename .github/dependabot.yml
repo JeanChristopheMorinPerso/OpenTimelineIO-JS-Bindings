@@ -22,5 +22,4 @@ updates:
       eslint:
         patterns:
           - "eslint"
-          - "eslint-*"
           - "@eslint/*"
