@@ -64,6 +64,46 @@ This is still a work in progress for now, but the base is there. That is:
 * Tests live in the [tests](./tests) directory.
 * Tests are run automatically on every push using GitHub Actions.
 
+## OTIO 0.18 schema features
+
+`Effect.enabled` defaults to `true` and is also available on `TimeEffect`,
+`LinearTimeWarp`, and `FreezeFrame`. `Marker.comment` defaults to an empty string.
+Both fields can be changed after construction or passed as the last argument to
+the full `Effect` and `Marker` constructors.
+
+`Color` provides editable `r`, `g`, `b`, `a`, and `name` properties, named colors
+such as `Color.RED`, hex conversion, and integer/float RGBA array conversion.
+`to_rgba_int_list()` defaults to 8 bits per channel, as in Python; pass a bit
+depth explicitly to use another precision. Conversion truncates rather than rounds.
+It represents UI labels, not image pixels. `Item.color` (inherited by clips and
+tracks) accepts a `Color`; assigning `undefined` clears it.
+
+Imath defaults also match Python: `new V2d()` is `(0, 0)`, and `new Box2d()`
+contains the single point `(0, 0)` rather than being empty.
+
+```javascript
+// Given an initialized otio module:
+const color = new otio.Color(0.2, 0.4, 0.8, 0.6, 'Blue label')
+const clip = new otio.Clip('Shot')
+clip.color = color
+const effect = new otio.Effect('Blur', 'blur', {}, false)
+const marker = new otio.Marker('Note')
+marker.comment = 'Check the cut'
+
+marker.delete()
+effect.delete()
+clip.delete()
+color.delete()
+```
+
+Color properties and metadata store copies. Returned colors, including named
+colors, are independently owned handles that need `delete()`. `Color`, `V2d`, and
+`Box2d` also round-trip through nested metadata. Standalone colors work with
+`serialize_json_to_string` and `deserialize_json_from_string`.
+
+Packed-integer color conversions are not exposed because OTIO 0.18.1's encoder
+and decoder disagree on channel order.
+
 ## TODO
 
 Most TODOs are documented in the code. Search for `TODO:` and you will find everything that

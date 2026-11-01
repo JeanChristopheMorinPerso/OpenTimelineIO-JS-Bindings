@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
 
-import { SerializableObject, RationalTime, TimeRange, TimeTransform, SchemaVersionMap } from "../install/opentimelineio";
+import { SerializableObject, RationalTime, TimeRange, TimeTransform, Color, SchemaVersionMap } from "../install/opentimelineio";
 
 type Int = number
 
@@ -28,4 +28,4 @@ export interface SerializeOptions {
  * @param item The thing to serialize.
  * @param options Serialization options.
  */
-export function serialize_json_to_string(item: SerializableObject | RationalTime | TimeRange | TimeTransform, options?: SerializeOptions): string
+export function serialize_json_to_string(item: SerializableObject | RationalTime | TimeRange | TimeTransform | Color, options?: SerializeOptions): string

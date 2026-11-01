@@ -36,7 +36,8 @@ _type_checked(ems::val const& rhs, char const* op)
 EMSCRIPTEN_BINDINGS(imath)
 {
     ems::class_<Imath::V2d>("V2d")
-        .constructor<>()
+        .constructor(
+            ems::optional_override([]() { return new Imath::V2d(0.0, 0.0); }))
         .constructor<double>()
         .constructor<double, double>()
         // TODO: How to bind this?
@@ -138,7 +139,8 @@ EMSCRIPTEN_BINDINGS(imath)
         .class_function("dimensions", &Imath::V2d::dimensions);
 
     ems::class_<Imath::Box2d>("Box2d")
-        .constructor<>()
+        .constructor(ems::optional_override(
+            []() { return new Imath::Box2d(Imath::V2d(0.0, 0.0)); }))
         .constructor<Imath::V2d>()
         .constructor<Imath::V2d, Imath::V2d>()
         .function(

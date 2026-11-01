@@ -59,6 +59,9 @@ Module.onRuntimeInitialized = function () {
 
     // TODO: Add to TypeScript definitions.
     Module.serialize_json_to_string = function (item, { schema_version_target = {}, indent = 4 } = {}) {
+        if (Module.Color && item instanceof Module.Color) {
+            return Module._serialize_Color_to_string(item, schema_version_target, indent)
+        }
         let jsitem;
         let func;
         if (item instanceof Module.RationalTime) {
