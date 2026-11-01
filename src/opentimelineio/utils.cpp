@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
 
-#include "any/any.hpp"
 #include "opentime/rationalTime.h"
 #include "opentime/timeRange.h"
 #include "opentime/timeTransform.h"
-#include "opentimelineio/any.h"
 #include "opentimelineio/anyVector.h"
-#include "opentimelineio/optional.h"
 #include "opentimelineio/safely_typed_any.h"
 #include "opentimelineio/stringUtils.h"
+#include <any>
 #include <cstddef>
 #include <cstdint>
 #include <emscripten.h>
@@ -26,9 +24,9 @@
 namespace ems = emscripten;
 
 static std::
-    map<std::type_info const*, std::function<ems::val(linb::any const&, bool)>>
+    map<std::type_info const*, std::function<ems::val(std::any const&, bool)>>
         _js_cast_dispatch_table;
-static std::map<std::string, std::function<ems::val(linb::any const&, bool)>>
+static std::map<std::string, std::function<ems::val(std::any const&, bool)>>
     _js_cast_dispatch_table_by_name;
 
 void
@@ -36,34 +34,34 @@ _build_any_to_js_dispatch_table()
 {
     auto& t = _js_cast_dispatch_table;
 
-    t[&typeid(void)] = [](linb::any const& /* a */, bool) {
+    t[&typeid(void)] = [](std::any const& /* a */, bool) {
         return ems::val::null();
     };
-    t[&typeid(bool)] = [](linb::any const& a, bool) {
+    t[&typeid(bool)] = [](std::any const& a, bool) {
         return ems::val(OTIO_NS::safely_cast_bool_any(a));
     };
-    t[&typeid(int)] = [](linb::any const& a, bool) {
+    t[&typeid(int)] = [](std::any const& a, bool) {
         return ems::val(OTIO_NS::safely_cast_int_any(a));
     };
-    t[&typeid(int64_t)] = [](linb::any const& a, bool) {
+    t[&typeid(int64_t)] = [](std::any const& a, bool) {
         return ems::val(static_cast<double>(OTIO_NS::safely_cast_int64_any(a)));
     };
-    t[&typeid(uint64_t)] = [](linb::any const& a, bool) {
+    t[&typeid(uint64_t)] = [](std::any const& a, bool) {
         return ems::val(OTIO_NS::safely_cast_uint64_any(a));
     };
-    t[&typeid(double)] = [](linb::any const& a, bool) {
+    t[&typeid(double)] = [](std::any const& a, bool) {
         return ems::val(OTIO_NS::safely_cast_double_any(a));
     };
-    t[&typeid(std::string)] = [](linb::any const& a, bool) {
+    t[&typeid(std::string)] = [](std::any const& a, bool) {
         return ems::val(OTIO_NS::safely_cast_string_any(a));
     };
-    t[&typeid(OTIO_NS::RationalTime)] = [](linb::any const& a, bool) {
+    t[&typeid(OTIO_NS::RationalTime)] = [](std::any const& a, bool) {
         return ems::val(OTIO_NS::safely_cast_rational_time_any(a));
     };
-    t[&typeid(OTIO_NS::TimeRange)] = [](linb::any const& a, bool) {
+    t[&typeid(OTIO_NS::TimeRange)] = [](std::any const& a, bool) {
         return ems::val(OTIO_NS::safely_cast_time_range_any(a));
     };
-    t[&typeid(OTIO_NS::TimeTransform)] = [](linb::any const& a, bool) {
+    t[&typeid(OTIO_NS::TimeTransform)] = [](std::any const& a, bool) {
         return ems::val(OTIO_NS::safely_cast_time_transform_any(a));
     };
     // t[&typeid(SerializableObject::Retainer<>)] = [](any const& a, bool) {
@@ -110,7 +108,7 @@ _build_any_to_js_dispatch_table()
 }
 
 ems::val
-any_to_js(linb::any const& a, bool top_level)
+any_to_js(std::any const& a, bool top_level)
 {
     std::type_info const& tInfo = a.type();
 
@@ -160,7 +158,7 @@ any_to_js(linb::any const& a, bool top_level)
     }
     else if (tInfo == typeid(OTIO_NS::AnyDictionary*))
     {
-        OTIO_NS::AnyDictionary* d = linb::any_cast<OTIO_NS::AnyDictionary*>(a);
+        OTIO_NS::AnyDictionary* d = std::any_cast<OTIO_NS::AnyDictionary*>(a);
         return ems::val(d, ems::allow_raw_pointers());
     }
     else if (tInfo == typeid(OTIO_NS::SerializableObject::Retainer<>))
@@ -209,19 +207,19 @@ EM_JS(bool, is_serializable, (ems::EM_VAL handle), {
 });
 // clang-format on
 
-linb::any
+std::any
 js_to_any(ems::val const& item)
 {
     std::string typ = item.typeOf().as<std::string>();
 
     if (item.isNull() || item.isUndefined())
     {
-        return linb::any(nullptr);
+        return std::any();
     }
 
     if (item.isFalse() || item.isTrue())
     {
-        return linb::any(js_to_cpp<bool>(item));
+        return std::any(js_to_cpp<bool>(item));
     }
 
     if (item.isNumber())
@@ -232,19 +230,19 @@ js_to_any(ems::val const& item)
             && item <= ems::val(std::numeric_limits<int32_t>::max())
             && item >= ems::val(std::numeric_limits<int32_t>::min()))
         {
-            return linb::any(static_cast<int64_t>(js_to_cpp<int32_t>(item)));
+            return std::any(static_cast<int64_t>(js_to_cpp<int32_t>(item)));
         }
-        return linb::any(js_to_cpp<double>(item));
+        return std::any(js_to_cpp<double>(item));
     }
 
     if (item.isString())
     {
-        return linb::any(js_to_cpp<std::string>(item));
+        return std::any(js_to_cpp<std::string>(item));
     }
 
     if (item.isArray())
     {
-        return linb::any(js_array_to_cpp(item));
+        return std::any(js_array_to_cpp(item));
     }
 
     char*       rawType = get_real_js_type(item.as_handle());
@@ -254,19 +252,19 @@ js_to_any(ems::val const& item)
     if (jsType == "RationalTime")
     {
         OTIO_NS::RationalTime rt = item.as<OTIO_NS::RationalTime>();
-        return linb::any(rt);
+        return std::any(rt);
     }
 
     if (jsType == "TimeRange")
     {
         OTIO_NS::TimeRange tr = item.as<OTIO_NS::TimeRange>();
-        return linb::any(tr);
+        return std::any(tr);
     }
 
     if (jsType == "TimeTransform")
     {
         OTIO_NS::TimeTransform tt = item.as<OTIO_NS::TimeTransform>();
-        return linb::any(tt);
+        return std::any(tt);
     }
 
     if (is_serializable(item.as_handle()))
@@ -278,7 +276,7 @@ js_to_any(ems::val const& item)
 
     if (item.typeOf().as<std::string>() == "object")
     {
-        return linb::any(js_map_to_cpp(item));
+        return std::any(js_map_to_cpp(item));
     }
 
     throw TypeError(

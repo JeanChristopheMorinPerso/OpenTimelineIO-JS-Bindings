@@ -23,6 +23,12 @@ test('test_contructors', () => {
     expect(clip.source_range).toEqual(tr)
     expect(clip.media_reference().is_equivalent_to(mr)).toEqual(true)
 
+    const proxyClip = new opentimelineio.Clip('proxy clip', mr, undefined, {}, 'proxy')
+    expect(proxyClip.active_media_reference_key).toBe('proxy')
+    expect(proxyClip.source_range).toBeUndefined()
+    expect(proxyClip.media_reference().is_equivalent_to(mr)).toBe(true)
+    proxyClip.delete()
+
     const encoded = opentimelineio.serialize_json_to_string(clip)
     const decoded = opentimelineio.SerializableObject.from_json_string(encoded)
     expect(clip.is_equivalent_to(decoded)).toEqual(true)

@@ -2,9 +2,8 @@
 // Copyright Contributors to the OpenTimelineIO project
 #include <utility>
 
-#include "any/any.hpp"
+#include <any>
 #include <emscripten/bind.h>
-#include <opentimelineio/any.h>
 #include <opentimelineio/anyVector.h>
 #include <opentimelineio/safely_typed_any.h>
 
@@ -21,9 +20,9 @@ EMSCRIPTEN_BINDINGS(opentimelineio_anyVector)
     //             std::string valueType = item.typeof().as<std::string>();
     //             if (valueType == "string")
     //             {
-    //                 a.push_back(linb::any(item.as<std::string>()));
+    //                 a.push_back(std::any(item.as<std::string>()));
     //             }
-    //             a.push_back(linb::any(item));
+    //             a.push_back(std::any(item));
     //             return true;
     //         }))
     //     .function(
@@ -39,7 +38,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio_anyVector)
     //         "set",
     //         ems::optional_override(
     //             [](OTIO_NS::AnyVector& a, int index, ems::val value) {
-    //                 a[index] = linb::any(value);
+    //                 a[index] = std::any(value);
     //                 return true;
     //             }));
 

@@ -5,8 +5,8 @@
 #include <memory>
 #include <string>
 
-#include <ImathBox.h>
-#include <ImathVec.h>
+#include <Imath/ImathBox.h>
+#include <Imath/ImathVec.h>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 

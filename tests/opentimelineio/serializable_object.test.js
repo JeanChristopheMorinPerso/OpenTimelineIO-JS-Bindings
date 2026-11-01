@@ -26,9 +26,7 @@ test('test_serialize_object', () => {
           "OTIO_SCHEMA": "SerializableObject.1"
 }`)
 
-    expect(opentimelineio.serialize_json_to_string(so, { indent: 0 })).toEqual(`{
-"OTIO_SCHEMA": "SerializableObject.1"
-}`)
+    expect(opentimelineio.serialize_json_to_string(so, { indent: 0 })).toEqual('{"OTIO_SCHEMA":"SerializableObject.1"}')
 
     // TODO: Test exceptions.
     so.delete()
@@ -47,6 +45,12 @@ test('test_schema_version_target', () => {
             schema_version_target: { Clip: 1 }
         })
         expect(JSON.parse(downgraded).OTIO_SCHEMA).toBe('Clip.1')
+        const decoded = opentimelineio.SerializableObject.from_json_string(downgraded)
+        try {
+            expect(decoded.is_equivalent_to(clip)).toBe(true)
+        } finally {
+            decoded.delete()
+        }
     } finally {
         clip.delete()
     }
@@ -93,7 +97,7 @@ test('test_serialize', () => {
         opentimelineio.SerializableObject.from_json_string('')
     })
 
-    expectError('type mismatch while decoding: Expected a SerializableObject*, found object of type \'opentimelineio::v1_0::AnyDictionary\' instead', () => {
+    expectError(expect.stringMatching(/^type mismatch while decoding: Expected a SerializableObject\*, found object of type '.*AnyDictionary.*' instead$/), () => {
         opentimelineio.SerializableObject.from_json_string('{}')
     })
 
@@ -118,7 +122,8 @@ test('test_metadata', () => {
             'string': 'myvalue',
             'int': -2147483648,
             'list': [1, 2.5, 'asd'],
-            'dict': { 'map1': [345] },
+            'dict': { 'map1': [345, null, undefined, false] },
+            'null': null,
             'AnyVector': [vectorItem],
             'AnyDictionary': {},
             'RationalTime': rationalTime,
@@ -134,7 +139,8 @@ test('test_metadata', () => {
             string: 'myvalue',
             int: -2147483648,
             list: [1, 2.5, 'asd'],
-            dict: { 'map1': [345] },
+            dict: { 'map1': [345, null, null, false] },
+            null: null,
             AnyVector: [{
                 OTIO_SCHEMA: 'SerializableObjectWithMetadata.1',
                 metadata: {},
@@ -175,6 +181,14 @@ test('test_metadata', () => {
                 name: 'nested'
             }
         })
+        const decoded = opentimelineio.SerializableObject.from_json_string(
+            opentimelineio.serialize_json_to_string(so)
+        )
+        try {
+            expect(decoded.is_equivalent_to(so)).toBe(true)
+        } finally {
+            decoded.delete()
+        }
     } finally {
         so.delete()
         vectorItem.delete()
