@@ -408,6 +408,23 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                     color,
                     js_map_to_cpp(metadata)));
             }))
+        .constructor(
+            ems::optional_override([](std::string const&        name,
+                                      OTIO_NS::TimeRange const& marked_range,
+                                      std::string const&        color,
+                                      ems::val const&           metadata,
+                                      std::string const&        comment) {
+                return managing_ptr<OTIO_NS::Marker>(new OTIO_NS::Marker(
+                    name,
+                    marked_range,
+                    color,
+                    js_map_to_cpp(metadata),
+                    comment));
+            }))
+        .property(
+            "comment",
+            &OTIO_NS::Marker::comment,
+            &OTIO_NS::Marker::set_comment)
         .property("color", &OTIO_NS::Marker::color, &OTIO_NS::Marker::set_color)
         .property(
             "marked_range",
@@ -960,6 +977,20 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                 effect_name,
                 js_map_to_cpp(metadata)));
         }))
+        .constructor(ems::optional_override([](std::string const& name,
+                                               std::string const& effect_name,
+                                               ems::val           metadata,
+                                               bool               enabled) {
+            return managing_ptr<OTIO_NS::Effect>(new OTIO_NS::Effect(
+                name,
+                effect_name,
+                js_map_to_cpp(metadata),
+                enabled));
+        }))
+        .property(
+            "enabled",
+            &OTIO_NS::Effect::enabled,
+            &OTIO_NS::Effect::set_enabled)
         .property(
             "effect_name",
             &OTIO_NS::Effect::effect_name,

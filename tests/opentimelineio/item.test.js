@@ -69,6 +69,41 @@ test('test_effects', () => {
     effect2.delete()
 })
 
+test.each(['Effect', 'TimeEffect', 'LinearTimeWarp', 'FreezeFrame'])('%s exposes enabled and preserves disabled effects through serialization', type => {
+    const effect = new opentimelineio[type]()
+    let decoded
+    let legacy
+    try {
+        expect(effect.enabled).toBe(true)
+        effect.enabled = false
+        const encoded = effect.to_json_string()
+        expect(JSON.parse(encoded).enabled).toBe(false)
+        decoded = opentimelineio.SerializableObject.from_json_string(encoded)
+        expect(decoded.enabled).toBe(false)
+        decoded.enabled = true
+        expect(decoded.enabled).toBe(true)
+        const legacyData = JSON.parse(encoded)
+        delete legacyData.enabled
+        legacy = opentimelineio.SerializableObject.from_json_string(JSON.stringify(legacyData))
+        expect(legacy.enabled).toBe(true)
+    } finally {
+        legacy?.delete()
+        decoded?.delete()
+        effect.delete()
+    }
+})
+
+test('Effect accepts enabled after metadata without changing existing constructors', () => {
+    const effect = new opentimelineio.Effect('effect', 'blur', { strength: 3 }, false)
+    try {
+        expect(effect.enabled).toBe(false)
+        expect(effect.effect_name).toBe('blur')
+        expect(effect.get_metadata()).toEqual({ strength: 3 })
+    } finally {
+        effect.delete()
+    }
+})
+
 test('test_markers_iteration', () => {
     const effects = new opentimelineio.EffectVector()
     const markers = new opentimelineio.MarkerVector()
