@@ -10,6 +10,30 @@ beforeAll(async () => {
     opentimelineio = await opentimelineioFactory();
 });
 
+test('Imath default constructors match Python zero initialization', () => {
+    const vector = new opentimelineio.V2d()
+    const origin = new opentimelineio.V2d(0, 0)
+    const scalar = new opentimelineio.V2d(12)
+    const minimum = new opentimelineio.V2d(-3, 7)
+    const maximum = new opentimelineio.V2d(11, 19)
+    const box = new opentimelineio.Box2d()
+    const originBox = new opentimelineio.Box2d(origin)
+    const bounds = new opentimelineio.Box2d(minimum, maximum)
+    const center = bounds.center()
+
+    try {
+        expect([vector.get(0), vector.get(1)]).toEqual([0, 0])
+        expect([scalar.get(0), scalar.get(1)]).toEqual([12, 12])
+        expect(box.equal(originBox)).toBe(true)
+        expect(box.intersects(originBox)).toBe(true)
+        expect([center.get(0), center.get(1)]).toEqual([4, 13])
+    } finally {
+        for (const value of [vector, origin, scalar, minimum, maximum, box, originBox, bounds, center]) {
+            value.delete()
+        }
+    }
+})
+
 test('test_composable_vector_iteration', () => {
     const vector = new opentimelineio.ComposableVector()
     const composable1 = new opentimelineio.Composable('composable1')
