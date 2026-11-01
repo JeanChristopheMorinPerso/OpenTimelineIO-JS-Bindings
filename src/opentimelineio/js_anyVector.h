@@ -8,7 +8,7 @@
 #include <string>
 #include <utility>
 
-#include "any/any.hpp"
+#include <any>
 #include <emscripten/bind.h>
 #include <opentimelineio/anyVector.h>
 

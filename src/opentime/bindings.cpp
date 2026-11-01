@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
+#include <any>
 #include <cstdio>
 #include <format>
 #include <memory>
@@ -10,7 +11,6 @@
 #include <opentime/rationalTime.h>
 #include <opentime/timeRange.h>
 #include <opentime/timeTransform.h>
-#include <opentimelineio/any.h>
 #include <opentimelineio/serialization.h>
 
 #include "common_utils.h"
@@ -76,7 +76,7 @@ _type_checked(ems::val const& rhs, char const* op)
 #define ADD_TO_JSON_STRING(TYPE)                                               \
     .function("to_json_string", ems::optional_override([](TYPE const& item) {  \
                   return OTIO_NS::serialize_json_to_string(                    \
-                      linb::any(item),                                         \
+                      std::any(item),                                          \
                       nullptr,                                                 \
                       ErrorStatusHandler(),                                    \
                       4);                                                      \
@@ -85,7 +85,7 @@ _type_checked(ems::val const& rhs, char const* op)
             "to_json_string",                                                  \
             ems::optional_override([](TYPE const& item, int indent) {          \
                 return OTIO_NS::serialize_json_to_string(                      \
-                    linb::any(item),                                           \
+                    std::any(item),                                            \
                     nullptr,                                                   \
                     ErrorStatusHandler(),                                      \
                     indent);                                                   \

@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "any/any.hpp"
+#include <any>
 #include <emscripten/bind.h>
 #include <opentimelineio/anyDictionary.h>
 
@@ -56,7 +56,7 @@ struct BindingType<OTIO_NS::AnyDictionary>
         std::cout
             << "Entering BindingType<OTIO_NS::AnyDictionary>::toWireType\n";
         val obj = val::object();
-        for (std::pair<std::string, linb::any> element: data)
+        for (std::pair<std::string, std::any> element: data)
         {
             obj.set(element.first, any_to_js(element.second, true));
         }

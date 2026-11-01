@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
+#include <any>
 #include <functional>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include "emscripten.h"
-#include <ImathBox.h>
+#include <Imath/ImathBox.h>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 #include <opentime/rationalTime.h>
@@ -511,7 +512,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         .function(
             "find_clips",
             ems::optional_override([](OTIO_NS::SerializableCollection* sc) {
-                return find_clips(sc, nonstd::nullopt, false);
+                return find_clips(sc, std::nullopt, false);
             }),
             ems::allow_raw_pointers())
         .function(
@@ -526,7 +527,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             ems::optional_override([](OTIO_NS::SerializableCollection* sc,
                                       OTIO_NS::TimeRange const& search_range,
                                       bool shallow_search) {
-                return find_clips(sc, nonstd::nullopt, shallow_search);
+                return find_clips(sc, std::nullopt, shallow_search);
             }),
             ems::allow_raw_pointers())
         .function(
@@ -746,6 +747,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                         media_reference,
                         source_range,
                         js_map_to_cpp(metadata),
+                        {},
+                        {},
                         OTIO_NS::Clip::default_media_key));
                 }),
             ems::allow_raw_pointers())
@@ -761,6 +764,8 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                         media_reference,
                         source_range,
                         js_map_to_cpp(metadata),
+                        {},
+                        {},
                         active_media_reference));
                 }),
             ems::allow_raw_pointers())
@@ -1430,7 +1435,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::function(
         "deserialize_json_from_string",
         ems::optional_override([](std::string input) {
-            linb::any result;
+            std::any result;
             OTIO_NS::deserialize_json_from_string(
                 input,
                 &result,
@@ -1441,7 +1446,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ems::function(
         "deserialize_json_from_file",
         ems::optional_override([](std::string filename) {
-            linb::any result;
+            std::any result;
             OTIO_NS::deserialize_json_from_file(
                 filename,
                 &result,

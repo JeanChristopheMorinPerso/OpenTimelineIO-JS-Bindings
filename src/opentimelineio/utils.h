@@ -10,9 +10,8 @@
 #include <utility>
 #include <vector>
 
-#include "any/any.hpp"
+#include <any>
 #include <emscripten/val.h>
-#include <opentimelineio/any.h>
 #include <opentimelineio/anyDictionary.h>
 #include <opentimelineio/anyVector.h>
 #include <opentimelineio/serializableObject.h>
@@ -24,9 +23,9 @@ namespace ems = emscripten;
 
 void _build_any_to_js_dispatch_table();
 
-ems::val any_to_js(linb::any const& a, bool top_level);
+ems::val any_to_js(std::any const& a, bool top_level);
 
-linb::any js_to_any(ems::val const& item);
+std::any js_to_any(ems::val const& item);
 
 template <typename T>
 T js_to_cpp(ems::val const& item);

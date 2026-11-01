@@ -15,7 +15,8 @@ test('release_to_schema_version_map returns nested JavaScript objects', () => {
 
     expect(versions['0.14.0'].Clip).toBe(1n)
     expect(versions['0.15.0'].Clip).toBe(2n)
-    expect(versions['0.16.0.dev1'].Marker).toBe(2n)
+    expect(versions['0.16.0'].Marker).toBe(2n)
+    expect(versions['0.18.1'].Clip).toBe(2n)
 })
 
 test('neighbors_of returns JavaScript neighbors', () => {

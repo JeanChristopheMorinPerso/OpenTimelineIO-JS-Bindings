@@ -4,10 +4,10 @@
 #ifndef JS_ANY_H
 #define JS_ANY_H
 
+#include <any>
 #include <opentime/rationalTime.h>
 #include <opentime/timeRange.h>
 #include <opentime/timeTransform.h>
-#include <opentimelineio/any.h>
 #include <opentimelineio/safely_typed_any.h>
 #include <opentimelineio/serializableObject.h>
 
@@ -18,7 +18,7 @@ struct JSAnyRationalTime
         : a(OTIO_NS::create_safely_typed_any(std::move(value)))
     {}
 
-    linb::any a;
+    std::any a;
 };
 
 struct JSAnyTimeRange
@@ -28,7 +28,7 @@ struct JSAnyTimeRange
         : a(OTIO_NS::create_safely_typed_any(std::move(value)))
     {}
 
-    linb::any a;
+    std::any a;
 };
 
 struct JSAnyTimeTransform
@@ -38,7 +38,7 @@ struct JSAnyTimeTransform
         : a(OTIO_NS::create_safely_typed_any(std::move(value)))
     {}
 
-    linb::any a;
+    std::any a;
 };
 
 struct JSAnySerializableObject
@@ -48,7 +48,7 @@ struct JSAnySerializableObject
         : a(OTIO_NS::create_safely_typed_any(value))
     {}
 
-    linb::any a;
+    std::any a;
 };
 
 #endif
