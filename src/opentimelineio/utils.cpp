@@ -5,8 +5,10 @@
 #include "opentime/timeRange.h"
 #include "opentime/timeTransform.h"
 #include "opentimelineio/anyVector.h"
+#include "opentimelineio/color.h"
 #include "opentimelineio/safely_typed_any.h"
 #include "opentimelineio/stringUtils.h"
+#include <Imath/ImathBox.h>
 #include <any>
 #include <cstddef>
 #include <cstdint>
@@ -156,6 +158,18 @@ any_to_js(std::any const& a, bool top_level)
     {
         return ems::val(OTIO_NS::safely_cast_time_transform_any(a));
     }
+    else if (tInfo == typeid(OTIO_NS::Color))
+    {
+        return ems::val(OTIO_NS::safely_cast_color_any(a));
+    }
+    else if (tInfo == typeid(Imath::V2d))
+    {
+        return ems::val(OTIO_NS::safely_cast_point_any(a));
+    }
+    else if (tInfo == typeid(Imath::Box2d))
+    {
+        return ems::val(OTIO_NS::safely_cast_box_any(a));
+    }
     else if (tInfo == typeid(OTIO_NS::AnyDictionary*))
     {
         OTIO_NS::AnyDictionary* d = std::any_cast<OTIO_NS::AnyDictionary*>(a);
@@ -265,6 +279,21 @@ js_to_any(ems::val const& item)
     {
         OTIO_NS::TimeTransform tt = item.as<OTIO_NS::TimeTransform>();
         return std::any(tt);
+    }
+
+    if (jsType == "Color")
+    {
+        return OTIO_NS::create_safely_typed_any(item.as<OTIO_NS::Color>());
+    }
+
+    if (jsType == "V2d")
+    {
+        return OTIO_NS::create_safely_typed_any(item.as<Imath::V2d>());
+    }
+
+    if (jsType == "Box2d")
+    {
+        return OTIO_NS::create_safely_typed_any(item.as<Imath::Box2d>());
     }
 
     if (is_serializable(item.as_handle()))

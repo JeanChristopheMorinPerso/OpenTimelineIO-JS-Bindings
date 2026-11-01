@@ -14,6 +14,7 @@
 #include <opentime/timeRange.h>
 #include <opentimelineio/anyDictionary.h>
 #include <opentimelineio/clip.h>
+#include <opentimelineio/color.h>
 #include <opentimelineio/composable.h>
 #include <opentimelineio/composition.h>
 #include <opentimelineio/deserialization.h>
@@ -226,8 +227,83 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         &SerializableObjectWrapper::destructor_count);
     ems::register_optional<OTIO_NS::TimeRange>();
     ems::register_optional<Imath::Box2d>();
+    ems::register_optional<OTIO_NS::Color>();
     ems::register_vector<OTIO_NS::Composable*>("ComposableVector");
     ems::register_vector<OTIO_NS::Track*>("TrackVector");
+
+    ems::class_<OTIO_NS::Color>("Color")
+        .constructor<>()
+        .constructor<double>()
+        .constructor<double, double>()
+        .constructor<double, double, double>()
+        .constructor<double, double, double, double>()
+        .constructor<double, double, double, double, std::string>()
+        .property("r", &OTIO_NS::Color::r, &OTIO_NS::Color::set_r)
+        .property("g", &OTIO_NS::Color::g, &OTIO_NS::Color::set_g)
+        .property("b", &OTIO_NS::Color::b, &OTIO_NS::Color::set_b)
+        .property("a", &OTIO_NS::Color::a, &OTIO_NS::Color::set_a)
+        .property("name", &OTIO_NS::Color::name, &OTIO_NS::Color::set_name)
+        .function("to_hex", &OTIO_NS::Color::to_hex)
+        .function(
+            "to_rgba_int_list",
+            ems::optional_override([](OTIO_NS::Color& color) {
+                return ems::val::array(color.to_rgba_int_list(8));
+            }))
+        .function(
+            "to_rgba_int_list",
+            ems::optional_override([](OTIO_NS::Color& color, int bit_depth) {
+                return ems::val::array(color.to_rgba_int_list(bit_depth));
+            }))
+        .function(
+            "to_rgba_float_list",
+            ems::optional_override([](OTIO_NS::Color& color) {
+                return ems::val::array(color.to_rgba_float_list());
+            }))
+        .function(
+            "equal",
+            ems::optional_override(
+                [](OTIO_NS::Color const& lhs, OTIO_NS::Color const& rhs) {
+                    return lhs == rhs;
+                }))
+        .class_function(
+            "from_hex",
+            &OTIO_NS::Color::from_hex,
+            ems::return_value_policy::take_ownership(),
+            ems::nonnull<ems::ret_val>())
+        .class_function(
+            "from_int_list",
+            ems::optional_override([](ems::val values, int bit_depth) {
+                return OTIO_NS::Color::from_int_list(
+                    ems::vecFromJSArray<int>(values),
+                    bit_depth);
+            }),
+            ems::return_value_policy::take_ownership(),
+            ems::nonnull<ems::ret_val>())
+        .class_function(
+            "from_float_list",
+            ems::optional_override([](ems::val values) {
+                return OTIO_NS::Color::from_float_list(
+                    ems::vecFromJSArray<double>(values));
+            }),
+            ems::return_value_policy::take_ownership(),
+            ems::nonnull<ems::ret_val>())
+        // TODO: When syncing to OTIO 0.19, verify that upstream #2070 is included:
+        // https://github.com/AcademySoftwareFoundation/OpenTimelineIO/pull/2070
+        // Bind Color.from_abgr_int and Color.to_abgr_int, not the old agbr names.
+        // Test ABGR (0xAABBGGRR) round trips with unequal G/B and partial alpha.
+        .class_property("PINK", &OTIO_NS::Color::pink)
+        .class_property("RED", &OTIO_NS::Color::red)
+        .class_property("ORANGE", &OTIO_NS::Color::orange)
+        .class_property("YELLOW", &OTIO_NS::Color::yellow)
+        .class_property("GREEN", &OTIO_NS::Color::green)
+        .class_property("CYAN", &OTIO_NS::Color::cyan)
+        .class_property("BLUE", &OTIO_NS::Color::blue)
+        .class_property("PURPLE", &OTIO_NS::Color::purple)
+        .class_property("MAGENTA", &OTIO_NS::Color::magenta)
+        .class_property("BLACK", &OTIO_NS::Color::black)
+        .class_property("WHITE", &OTIO_NS::Color::white)
+        .class_property("TRANSPARENT", &OTIO_NS::Color::transparent);
+    ADD_TO_STRING_TAG_PROPERTY(Color);
 
     ems::class_<OTIO_NS::SerializableObject>("SerializableObject")
         .smart_ptr_constructor(
@@ -663,6 +739,7 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             "enabled",
             &OTIO_NS::Item::enabled,
             &OTIO_NS::Item::set_enabled)
+        .property("color", &OTIO_NS::Item::color, &OTIO_NS::Item::set_color)
         .property(
             "source_range",
             &OTIO_NS::Item::source_range,
@@ -1371,6 +1448,19 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                 ErrorStatusHandler());
         }),
         ems::allow_raw_pointers());
+
+    ems::function(
+        "_serialize_Color_to_string",
+        ems::optional_override(
+            [](OTIO_NS::Color                     color,
+               OTIO_NS::schema_version_map const& schema_version_target,
+               int                                indent) {
+                return OTIO_NS::serialize_json_to_string(
+                    OTIO_NS::create_safely_typed_any(std::move(color)),
+                    &schema_version_target,
+                    ErrorStatusHandler(),
+                    indent);
+            }));
 
     // TODO: Figure out why when we use this, js_to_any returns an AnyDictionary...
     ems::function(
