@@ -109,3 +109,27 @@ test('destroyed wrapper addresses can be reused', () => {
         before + 100
     )
 })
+
+test.each(['Track', 'TimeEffect', 'LinearTimeWarp', 'FreezeFrame'])('%s stays usable after standalone serialization', type => {
+    const object = new opentimelineio[type]('standalone')
+    let decoded
+
+    try {
+        const encoded = object.to_json_string()
+        expect(JSON.parse(encoded).name).toBe('standalone')
+        expect(object.name).toBe('standalone')
+
+        const encodedAgain = opentimelineio.serialize_json_to_string(object)
+        expect(JSON.parse(encodedAgain).name).toBe('standalone')
+        expect(object.schema_name()).toBe(type)
+
+        decoded = opentimelineio.SerializableObject.from_json_string(encodedAgain)
+        expect(decoded.name).toBe('standalone')
+        expect(decoded.is_equivalent_to(object)).toBe(true)
+    } finally {
+        decoded?.delete()
+        object.delete()
+    }
+
+    expect(object.isDeleted()).toBe(true)
+})

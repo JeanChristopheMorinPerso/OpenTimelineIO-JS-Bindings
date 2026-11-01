@@ -944,21 +944,22 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
 
     // TODO: Implement
     ems::class_<OTIO_NS::Track, ems::base<OTIO_NS::Composition>>("Track")
-        .constructor<>()
-        .constructor<std::string>()
+        .smart_ptr<managing_ptr<OTIO_NS::Track>>("Track")
+        .constructor(&make_managing_ptr<OTIO_NS::Track>)
+        .constructor(&make_managing_ptr<OTIO_NS::Track, std::string>)
         .constructor(ems::optional_override(
             [](std::string const&                name,
                std::vector<OTIO_NS::Composable*> children) {
-                OTIO_NS::Track* t = new OTIO_NS::Track(name);
-                t->set_children(children, ErrorStatusHandler());
+                auto t = make_managing_ptr<OTIO_NS::Track>(name);
+                t.get()->set_children(children, ErrorStatusHandler());
                 return t;
             }))
         .constructor(ems::optional_override(
             [](std::string const&                name,
                std::vector<OTIO_NS::Composable*> children,
                OTIO_NS::TimeRange const&         source_range) {
-                OTIO_NS::Track* t = new OTIO_NS::Track(name, source_range);
-                t->set_children(children, ErrorStatusHandler());
+                auto t = make_managing_ptr<OTIO_NS::Track>(name, source_range);
+                t.get()->set_children(children, ErrorStatusHandler());
                 return t;
             }))
         .constructor(ems::optional_override(
@@ -966,9 +967,9 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                std::vector<OTIO_NS::Composable*> children,
                OTIO_NS::TimeRange const&         source_range,
                std::string const&                kind) {
-                OTIO_NS::Track* t =
-                    new OTIO_NS::Track(name, source_range, kind);
-                t->set_children(children, ErrorStatusHandler());
+                auto t =
+                    make_managing_ptr<OTIO_NS::Track>(name, source_range, kind);
+                t.get()->set_children(children, ErrorStatusHandler());
                 return t;
             }))
         .constructor(ems::optional_override(
@@ -977,12 +978,12 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                OTIO_NS::TimeRange const&         source_range,
                std::string const&                kind,
                ems::val metadata = ems::val::object()) {
-                OTIO_NS::Track* t = new OTIO_NS::Track(
+                auto t = make_managing_ptr<OTIO_NS::Track>(
                     name,
                     source_range,
                     kind,
                     js_map_to_cpp(metadata));
-                t->set_children(children, ErrorStatusHandler());
+                t.get()->set_children(children, ErrorStatusHandler());
                 return t;
             }))
         .property("kind", &OTIO_NS::Track::kind, &OTIO_NS::Track::set_kind)
@@ -1076,38 +1077,43 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
     ADD_TO_STRING_TAG_PROPERTY(Effect);
 
     ems::class_<OTIO_NS::TimeEffect, ems::base<OTIO_NS::Effect>>("TimeEffect")
-        .constructor<>()
-        .constructor<std::string>()
-        .constructor<std::string, std::string>()
+        .smart_ptr<managing_ptr<OTIO_NS::TimeEffect>>("TimeEffect")
+        .constructor(&make_managing_ptr<OTIO_NS::TimeEffect>)
+        .constructor(&make_managing_ptr<OTIO_NS::TimeEffect, std::string>)
+        .constructor(
+            &make_managing_ptr<OTIO_NS::TimeEffect, std::string, std::string>)
         .constructor(ems::optional_override([](std::string const& name,
                                                std::string const& effect_name,
                                                ems::val           metadata) {
-            return new OTIO_NS::TimeEffect(
+            return managing_ptr<OTIO_NS::TimeEffect>(new OTIO_NS::TimeEffect(
                 name,
                 effect_name,
-                js_map_to_cpp(metadata));
+                js_map_to_cpp(metadata)));
         }));
 
     ADD_TO_STRING_TAG_PROPERTY(TimeEffect);
 
     ems::class_<OTIO_NS::LinearTimeWarp, ems::base<OTIO_NS::TimeEffect>>(
         "LinearTimeWarp")
-        .constructor<>()
-        .constructor<std::string>()
+        .smart_ptr<managing_ptr<OTIO_NS::LinearTimeWarp>>("LinearTimeWarp")
+        .constructor(&make_managing_ptr<OTIO_NS::LinearTimeWarp>)
+        .constructor(&make_managing_ptr<OTIO_NS::LinearTimeWarp, std::string>)
         .constructor(ems::optional_override(
             [](std::string const& name, double time_scalar) {
-                return new OTIO_NS::LinearTimeWarp(
-                    name,
-                    "LinearTimeWarp",
-                    time_scalar);
+                return managing_ptr<OTIO_NS::LinearTimeWarp>(
+                    new OTIO_NS::LinearTimeWarp(
+                        name,
+                        "LinearTimeWarp",
+                        time_scalar));
             }))
         .constructor(ems::optional_override(
             [](std::string const& name, double time_scalar, ems::val metadata) {
-                return new OTIO_NS::LinearTimeWarp(
-                    name,
-                    "LinearTimeWarp",
-                    time_scalar,
-                    js_map_to_cpp(metadata));
+                return managing_ptr<OTIO_NS::LinearTimeWarp>(
+                    new OTIO_NS::LinearTimeWarp(
+                        name,
+                        "LinearTimeWarp",
+                        time_scalar,
+                        js_map_to_cpp(metadata)));
             }))
         .property(
             "time_scalar",
@@ -1118,11 +1124,13 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
 
     ems::class_<OTIO_NS::FreezeFrame, ems::base<OTIO_NS::LinearTimeWarp>>(
         "FreezeFrame")
-        .constructor<>()
-        .constructor<std::string>()
+        .smart_ptr<managing_ptr<OTIO_NS::FreezeFrame>>("FreezeFrame")
+        .constructor(&make_managing_ptr<OTIO_NS::FreezeFrame>)
+        .constructor(&make_managing_ptr<OTIO_NS::FreezeFrame, std::string>)
         .constructor(ems::optional_override(
             [](std::string const& name, ems::val metadata) {
-                return new OTIO_NS::FreezeFrame(name, js_map_to_cpp(metadata));
+                return managing_ptr<OTIO_NS::FreezeFrame>(
+                    new OTIO_NS::FreezeFrame(name, js_map_to_cpp(metadata)));
             }));
 
     ADD_TO_STRING_TAG_PROPERTY(FreezeFrame);
