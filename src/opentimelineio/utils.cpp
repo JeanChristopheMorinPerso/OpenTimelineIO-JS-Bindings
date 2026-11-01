@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Contributors to the OpenTimelineIO project
 
-#include <any>
 #include "opentime/rationalTime.h"
 #include "opentime/timeRange.h"
 #include "opentime/timeTransform.h"
 #include "opentimelineio/anyVector.h"
 #include "opentimelineio/safely_typed_any.h"
 #include "opentimelineio/stringUtils.h"
+#include <any>
 #include <cstddef>
 #include <cstdint>
 #include <emscripten.h>
