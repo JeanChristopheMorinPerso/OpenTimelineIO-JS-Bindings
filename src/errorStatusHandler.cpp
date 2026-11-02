@@ -11,7 +11,7 @@
 #include <exceptions.h>
 
 namespace ems  = emscripten;
-namespace otio = opentimelineio::OPENTIMELINEIO_VERSION;
+namespace otio = OTIO_NS;
 
 ErrorStatusHandler::~ErrorStatusHandler() noexcept(false)
 {

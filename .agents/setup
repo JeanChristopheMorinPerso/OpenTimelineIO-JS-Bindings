@@ -29,6 +29,10 @@ if ((${#packages[@]})); then
         sudo apt-get install -y --no-install-recommends "${packages[@]}"
 fi
 
+if ! cmake --version | head -n 1 | awk '{ split($3, v, "."); exit !(v[1] > 3 || (v[1] == 3 && v[2] >= 31)) }'; then
+    run_step "Install CMake 3.31" uv tool install 'cmake>=3.31,<4'
+fi
+
 run_step "Initialize Git submodules" git submodule update --init --recursive
 export PNPM_HOME="${PNPM_HOME:-$HOME/.local/share/pnpm}"
 export PATH="$PNPM_HOME:$PATH"

@@ -3,8 +3,13 @@
 This repository is the home to the [OpenTimelineIO](https://github.com/AcademySoftwareFoundation/OpenTimelineIO)
 Javascript bindings.
 
+The OTIO submodule is pinned to upstream `main` commit
+[`80c5ff3`](https://github.com/AcademySoftwareFoundation/OpenTimelineIO/commit/80c5ff30938e4adffe9c94f419b1055856cee9f5)
+(0.19.0 development, not a released 0.19 build).
+
 ## Prerequisites
 
+- CMake 3.31 or higher
 - Node 20 or higher ([https://nodejs.org/en/download](https://nodejs.org/en/download))
 - [pnpm](https://pnpm.io/installation) 11 or higher
 ## Getting Started
@@ -64,7 +69,7 @@ This is still a work in progress for now, but the base is there. That is:
 * Tests live in the [tests](./tests) directory.
 * Tests are run automatically on every push using GitHub Actions.
 
-## OTIO 0.18 schema features
+## Schema features
 
 `Effect.enabled` defaults to `true` and is also available on `TimeEffect`,
 `LinearTimeWarp`, and `FreezeFrame`. `Marker.comment` defaults to an empty string.
@@ -77,6 +82,15 @@ such as `Color.RED`, hex conversion, and integer/float RGBA array conversion.
 depth explicitly to use another precision. Conversion truncates rather than rounds.
 It represents UI labels, not image pixels. `Item.color` (inherited by clips and
 tracks) accepts a `Color`; assigning `undefined` clears it.
+
+`Marker.color` now also accepts a `Color` or `undefined`, not a color-name string.
+Its default is red, matching Python. Target `Marker: 2` in serialization options
+to write named colors for older consumers. The former empty `MarkerColor`
+binding has been removed. This upstream head has a known Marker.2 read regression:
+the 1-to-2 upgrade incorrectly reruns and clears `marked_range`. The regression
+tests intentionally fail until it is fixed; Marker.1 and Marker.3 reads work.
+`Transition.enabled` defaults to `true` and may be passed after metadata to the
+full constructor.
 
 Imath defaults also match Python: `new V2d()` is `(0, 0)`, and `new Box2d()`
 contains the single point `(0, 0)` rather than being empty.
@@ -101,8 +115,13 @@ colors, are independently owned handles that need `delete()`. `Color`, `V2d`, an
 `Box2d` also round-trip through nested metadata. Standalone colors work with
 `serialize_json_to_string` and `deserialize_json_from_string`.
 
-Packed-integer color conversions are not exposed because OTIO 0.18.1's encoder
-and decoder disagree on channel order.
+`Color.from_abgr_int()` and `Color.to_abgr_int()` convert packed colors using
+`0xAABBGGRR`, including alpha. The old misspelled `agbr` APIs are not exposed.
+The upstream packed-color channel-order and zero-SMPTE-rate fixes are included.
+
+`make build` prepares Emscripten's zlib port before CMake configuration for OTIO's
+new native bundle dependency. The bundle APIs themselves and previously missing
+OpenTime/editing APIs are not added by this compatibility sync.
 
 ## TODO
 

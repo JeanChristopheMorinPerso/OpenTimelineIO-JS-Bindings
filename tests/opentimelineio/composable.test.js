@@ -12,6 +12,36 @@ beforeAll(async () => {
     opentimelineio = await opentimelineioFactory();
 });
 
+test('Transition enabled defaults and disabled round trips match upstream', () => {
+    const inOffset = new opentimelineio.RationalTime(3, 24)
+    const outOffset = new opentimelineio.RationalTime(7, 24)
+    const transition = new opentimelineio.Transition('cut', 'SMPTE_Dissolve', inOffset, outOffset, {})
+    const disabled = new opentimelineio.Transition('disabled', 'Custom', inOffset, outOffset, {}, false)
+    let decoded
+    let legacy
+    try {
+        expect(transition.enabled).toBe(true)
+        expect(disabled.enabled).toBe(false)
+        transition.enabled = false
+        const encoded = transition.to_json_string()
+        expect(JSON.parse(encoded).enabled).toBe(false)
+        decoded = opentimelineio.SerializableObject.from_json_string(encoded)
+        expect(decoded.enabled).toBe(false)
+        expect(decoded.is_equivalent_to(transition)).toBe(true)
+        const legacyData = JSON.parse(encoded)
+        delete legacyData.enabled
+        legacy = opentimelineio.SerializableObject.from_json_string(JSON.stringify(legacyData))
+        expect(legacy.enabled).toBe(true)
+    } finally {
+        legacy?.delete()
+        decoded?.delete()
+        disabled.delete()
+        transition.delete()
+        inOffset.delete()
+        outOffset.delete()
+    }
+})
+
 test('test_construct', () => {
     const composable1 = new opentimelineio.Composable()
     expect(composable1.name).toEqual('')
