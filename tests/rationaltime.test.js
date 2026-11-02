@@ -1,5 +1,5 @@
 const factory = require('../install/opentime');
-const { expect, test, beforeAll } = require('@jest/globals');
+const { describe, expect, test, beforeAll } = require('@jest/globals');
 
 /**
  * @type {factory.CustomEmbindModule}
@@ -14,6 +14,144 @@ test('SMPTE rate selection does not accept or select zero', () => {
     expect(lib.RationalTime.is_valid_timecode_rate(0)).toBe(false)
     expect(lib.RationalTime.nearest_valid_timecode_rate(1)).toBe(24000 / 1001)
     expect(lib.RationalTime.nearest_valid_timecode_rate(29.97)).toBe(30000 / 1001)
+})
+
+describe.each([
+    ['opentime', factory],
+    ['opentimelineio', require('../install/opentimelineio')]
+])('%s OpenTime APIs from 0.16–0.18', (name, createModule) => {
+    let time
+    beforeAll(async () => {
+        time = await createModule()
+    })
+
+    test('strict equality compares both frame value and rate without rescaling', () => {
+        const first = new time.RationalTime(30, 24)
+        const scaled = new time.RationalTime(60, 48)
+        const same = new time.RationalTime(30, 24)
+        try {
+            expect(first.equal(scaled)).toBe(true)
+            expect(first.strictly_equal(scaled)).toBe(false)
+            expect(first.strictly_equal(same)).toBe(true)
+        } finally {
+            first.delete()
+            scaled.delete()
+            same.delete()
+        }
+    })
+
+    test('rounding preserves rate and rounds negative halves away from zero', () => {
+        for (const [value, floor, ceil, round] of [
+            [-2.5, -3, -2, -3],
+            [2.5, 2, 3, 3],
+            [-2.25, -3, -2, -2],
+            [2.75, 2, 3, 3]
+        ]) {
+            const original = new time.RationalTime(value, 48)
+            try {
+                for (const [method, expected] of [['floor', floor], ['ceil', ceil], ['round', round]]) {
+                    const rounded = original[method]()
+                    try {
+                        expect([rounded.value, rounded.rate]).toEqual([expected, 48])
+                    } finally {
+                        rounded.delete()
+                    }
+                }
+                expect(original.value).toBe(value)
+            } finally {
+                original.delete()
+            }
+        }
+    })
+
+    test('time validity permits negative values but rejects NaN and nonpositive rates', () => {
+        for (const [value, rate, valid] of [
+            [-3.5, 24, true], [0, 24, true], [1, 0, false],
+            [1, -24, false], [NaN, 24, false], [1, NaN, false]
+        ]) {
+            const rational = new time.RationalTime(value, rate)
+            try {
+                expect(rational.is_valid_time()).toBe(valid)
+                expect(rational.is_invalid_time()).toBe(!valid)
+            } finally {
+                rational.delete()
+            }
+        }
+    })
+
+    test('numeric ranges preserve fractional frames and validate duration boundaries', () => {
+        const range = new time.TimeRange(-12.5, 7.25, 48)
+        const start = range.start_time
+        const duration = range.duration
+        try {
+            expect([start.value, start.rate]).toEqual([-12.5, 48])
+            expect([duration.value, duration.rate]).toEqual([7.25, 48])
+        } finally {
+            start.delete()
+            duration.delete()
+            range.delete()
+        }
+        for (const [start, duration, rate, valid] of [
+            [-12, 0, 24, true], [-12, 7.5, 48, true],
+            [12, -0.5, 24, false], [12, 1, 0, false],
+            [NaN, 1, 24, false], [12, NaN, 24, false]
+        ]) {
+            const range = new time.TimeRange(start, duration, rate)
+            try {
+                expect(range.is_valid_range()).toBe(valid)
+                expect(range.is_invalid_range()).toBe(!valid)
+            } finally {
+                range.delete()
+            }
+        }
+        const validStart = new time.RationalTime(12, 24)
+        const invalidDuration = new time.RationalTime(7, 0)
+        const mixed = new time.TimeRange(validStart, invalidDuration)
+        try {
+            expect(mixed.is_valid_range()).toBe(false)
+            expect(mixed.is_invalid_range()).toBe(true)
+        } finally {
+            mixed.delete()
+            invalidDuration.delete()
+            validStart.delete()
+        }
+    })
+
+    test('preferred SMPTE helper names retain the legacy aliases', () => {
+        for (const [rate, valid, nearest] of [
+            [0, false, 24000 / 1001],
+            [29.97, false, 30000 / 1001],
+            [30000 / 1001, true, 30000 / 1001],
+            [48, true, 48], [49, false, 48]
+        ]) {
+            expect(time.RationalTime.is_smpte_timecode_rate(rate)).toBe(valid)
+            expect(time.RationalTime.is_valid_timecode_rate(rate)).toBe(valid)
+            expect(time.RationalTime.nearest_smpte_timecode_rate(rate)).toBe(nearest)
+            expect(time.RationalTime.nearest_valid_timecode_rate(rate)).toBe(nearest)
+        }
+    })
+
+    test('nearest timecode snaps arbitrary rates and respects override and drop-frame options', () => {
+        const oddRate = new time.RationalTime(260, 26)
+        const fractional = new time.RationalTime(37, 24)
+        const drop = new time.RationalTime(1800, 30000 / 1001)
+        const negative = new time.RationalTime(-1, 24)
+        try {
+            expect(() => oddRate.to_timecode()).toThrow()
+            expect(oddRate.to_nearest_timecode()).toBe('00:00:10:00')
+            expect(fractional.to_nearest_timecode(49)).toBe('00:00:01:26')
+            expect(drop.to_nearest_timecode()).toBe('00:01:00;02')
+            expect(drop.to_nearest_timecode(29.97, time.IsDropFrameRate.ForceYes)).toBe('00:01:00;02')
+            expect(drop.to_nearest_timecode(29.97, time.IsDropFrameRate.ForceNo)).toBe('00:01:00:00')
+            expect(() => fractional.to_nearest_timecode(24, time.IsDropFrameRate.ForceYes)).toThrow()
+            expect(() => negative.to_nearest_timecode()).toThrow()
+        } finally {
+            oddRate.delete()
+            fractional.delete()
+            drop.delete()
+            negative.delete()
+        }
+    })
 })
 
 test('create', () => {
