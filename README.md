@@ -88,7 +88,8 @@ Its default is red, matching Python. Target `Marker: 2` in serialization options
 to write named colors for older consumers. The former empty `MarkerColor`
 binding has been removed. This upstream head has a known Marker.2 read regression:
 the 1-to-2 upgrade incorrectly reruns and clears `marked_range`. The regression
-tests intentionally fail until it is fixed; Marker.1 and Marker.3 reads work.
+tests run as expected failures until it is fixed; an unexpected pass flags that
+the annotations must be removed. Marker.1 and Marker.3 reads work.
 `Transition.enabled` defaults to `true` and may be passed after metadata to the
 full constructor.
 
