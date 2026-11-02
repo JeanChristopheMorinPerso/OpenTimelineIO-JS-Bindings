@@ -777,19 +777,41 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
 
     ems::class_<OTIO_NS::Transition, ems::base<OTIO_NS::Composable>>(
         "Transition")
+        .smart_ptr<managing_ptr<OTIO_NS::Transition>>("Transition")
         .constructor(
             ems::optional_override([](std::string const&    name,
                                       std::string const&    transition_type,
                                       OTIO_NS::RationalTime in_offset,
                                       OTIO_NS::RationalTime out_offset,
                                       ems::val              metadata) {
-                return new OTIO_NS::Transition(
-                    name,
-                    transition_type,
-                    in_offset,
-                    out_offset,
-                    js_map_to_cpp(metadata));
+                return managing_ptr<OTIO_NS::Transition>(
+                    new OTIO_NS::Transition(
+                        name,
+                        transition_type,
+                        in_offset,
+                        out_offset,
+                        js_map_to_cpp(metadata)));
             }))
+        .constructor(
+            ems::optional_override([](std::string const&    name,
+                                      std::string const&    transition_type,
+                                      OTIO_NS::RationalTime in_offset,
+                                      OTIO_NS::RationalTime out_offset,
+                                      ems::val              metadata,
+                                      bool                  enabled) {
+                return managing_ptr<OTIO_NS::Transition>(
+                    new OTIO_NS::Transition(
+                        name,
+                        transition_type,
+                        in_offset,
+                        out_offset,
+                        js_map_to_cpp(metadata),
+                        enabled));
+            }))
+        .property(
+            "enabled",
+            &OTIO_NS::Transition::enabled,
+            &OTIO_NS::Transition::set_enabled)
         .property(
             "transition_type",
             &OTIO_NS::Transition::transition_type,
