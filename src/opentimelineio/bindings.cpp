@@ -462,34 +462,48 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
         OTIO_NS::Marker,
         ems::base<OTIO_NS::SerializableObjectWithMetadata>>("Marker")
         .smart_ptr<managing_ptr<OTIO_NS::Marker>>("Marker")
-        .constructor(&make_managing_ptr<OTIO_NS::Marker>)
-        .constructor(&make_managing_ptr<OTIO_NS::Marker, std::string>)
-        .constructor(&make_managing_ptr<
-                     OTIO_NS::Marker,
-                     std::string,
-                     OTIO_NS::TimeRange>)
+        .constructor(ems::optional_override([]() {
+            return make_managing_ptr<OTIO_NS::Marker>(
+                std::string(),
+                OTIO_NS::TimeRange(),
+                OTIO_NS::Color::red);
+        }))
+        .constructor(ems::optional_override([](std::string const& name) {
+            return make_managing_ptr<OTIO_NS::Marker>(
+                name,
+                OTIO_NS::TimeRange(),
+                OTIO_NS::Color::red);
+        }))
+        .constructor(
+            ems::optional_override([](std::string const&        name,
+                                      OTIO_NS::TimeRange const& marked_range) {
+                return make_managing_ptr<OTIO_NS::Marker>(
+                    name,
+                    marked_range,
+                    OTIO_NS::Color::red);
+            }))
         .constructor(&make_managing_ptr<
                      OTIO_NS::Marker,
                      std::string,
                      OTIO_NS::TimeRange,
-                     std::string>)
-        .constructor(
-            ems::optional_override([](std::string const&        name,
-                                      OTIO_NS::TimeRange const& marked_range,
-                                      std::string const&        color,
-                                      ems::val const&           metadata) {
+                     std::optional<OTIO_NS::Color>>)
+        .constructor(ems::optional_override(
+            [](std::string const&                   name,
+               OTIO_NS::TimeRange const&            marked_range,
+               std::optional<OTIO_NS::Color> const& color,
+               ems::val const&                      metadata) {
                 return managing_ptr<OTIO_NS::Marker>(new OTIO_NS::Marker(
                     name,
                     marked_range,
                     color,
                     js_map_to_cpp(metadata)));
             }))
-        .constructor(
-            ems::optional_override([](std::string const&        name,
-                                      OTIO_NS::TimeRange const& marked_range,
-                                      std::string const&        color,
-                                      ems::val const&           metadata,
-                                      std::string const&        comment) {
+        .constructor(ems::optional_override(
+            [](std::string const&                   name,
+               OTIO_NS::TimeRange const&            marked_range,
+               std::optional<OTIO_NS::Color> const& color,
+               ems::val const&                      metadata,
+               std::string const&                   comment) {
                 return managing_ptr<OTIO_NS::Marker>(new OTIO_NS::Marker(
                     name,
                     marked_range,
@@ -508,10 +522,6 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             &OTIO_NS::Marker::set_marked_range);
 
     ADD_TO_STRING_TAG_PROPERTY(Marker);
-
-    // TODO: Should this be an enum or maybe something else?
-    ems::class_<OTIO_NS::Marker::Color>("MarkerColor");
-    ADD_TO_STRING_TAG_PROPERTY(MarkerColor);
 
     // TODO: Use custom unmarshaling? When I tried, it wasn't even compiling.
     ems::register_vector<OTIO_NS::SerializableObject*>("SOVector");
