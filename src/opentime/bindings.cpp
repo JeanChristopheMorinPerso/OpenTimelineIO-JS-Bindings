@@ -104,6 +104,7 @@ EMSCRIPTEN_BINDINGS(opentime)
         .constructor<double>()
         .constructor<double, double>()
         .function("is_invalid_time", &RationalTime::is_invalid_time)
+        .function("is_valid_time", &RationalTime::is_valid_time)
         .property("value", &RationalTime::value)
         .property("rate", &RationalTime::rate)
         .function(
@@ -123,6 +124,10 @@ EMSCRIPTEN_BINDINGS(opentime)
             ems::select_overload<double(RationalTime) const>(
                 &RationalTime::value_rescaled_to))
         .function("almost_equal", &RationalTime::almost_equal)
+        .function("strictly_equal", &RationalTime::strictly_equal)
+        .function("floor", &RationalTime::floor)
+        .function("ceil", &RationalTime::ceil)
+        .function("round", &RationalTime::round)
         .class_function(
             "duration_from_start_end_time",
             &RationalTime::duration_from_start_end_time)
@@ -135,6 +140,12 @@ EMSCRIPTEN_BINDINGS(opentime)
         .class_function(
             "nearest_valid_timecode_rate",
             &RationalTime::nearest_valid_timecode_rate)
+        .class_function(
+            "is_smpte_timecode_rate",
+            &RationalTime::is_smpte_timecode_rate)
+        .class_function(
+            "nearest_smpte_timecode_rate",
+            &RationalTime::nearest_smpte_timecode_rate)
         .class_function("from_frames", &RationalTime::from_frames)
         // TODO: Variable arguments
         .class_function(
@@ -175,6 +186,32 @@ EMSCRIPTEN_BINDINGS(opentime)
                                       double              rate,
                                       IsDropFrameRate     drop_frame) {
                 return rt.to_timecode(rate, drop_frame, ErrorStatusConverter());
+            }))
+        .function(
+            "to_nearest_timecode",
+            ems::optional_override([](RationalTime const& rt) {
+                return rt.to_nearest_timecode(
+                    rt.rate(),
+                    IsDropFrameRate::InferFromRate,
+                    ErrorStatusConverter());
+            }))
+        .function(
+            "to_nearest_timecode",
+            ems::optional_override([](RationalTime const& rt, double rate) {
+                return rt.to_nearest_timecode(
+                    rate,
+                    IsDropFrameRate::InferFromRate,
+                    ErrorStatusConverter());
+            }))
+        .function(
+            "to_nearest_timecode",
+            ems::optional_override([](RationalTime const& rt,
+                                      double              rate,
+                                      IsDropFrameRate     drop_frame) {
+                return rt.to_nearest_timecode(
+                    rate,
+                    drop_frame,
+                    ErrorStatusConverter());
             }))
         .function("to_time_string", &RationalTime::to_time_string)
         .class_function(
@@ -222,6 +259,9 @@ EMSCRIPTEN_BINDINGS(opentime)
         .constructor()
         .constructor<RationalTime>()
         .constructor<RationalTime, RationalTime>()
+        .constructor<double, double, double>()
+        .function("is_valid_range", &TimeRange::is_valid_range)
+        .function("is_invalid_range", &TimeRange::is_invalid_range)
         .property("start_time", &TimeRange::start_time)
         .property("duration", &TimeRange::duration)
         .function("end_time_inclusive", &TimeRange::end_time_inclusive)

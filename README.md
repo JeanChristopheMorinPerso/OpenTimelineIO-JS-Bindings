@@ -69,6 +69,24 @@ This is still a work in progress for now, but the base is there. That is:
 * Tests live in the [tests](./tests) directory.
 * Tests are run automatically on every push using GitHub Actions.
 
+## OpenTime APIs
+
+Both modules expose the OpenTime additions from OTIO 0.16–0.18:
+
+* `RationalTime.strictly_equal()` compares value and rate without rescaling.
+* `floor()`, `ceil()`, and `round()` return new times at the original rate.
+  Halfway values round away from zero, including negative values.
+* `is_valid_time()`, `TimeRange.is_valid_range()`, and `is_invalid_range()`
+  expose upstream validity checks; zero-duration ranges are valid.
+* `new TimeRange(startFrame, durationFrames, rate)` supports fractional values.
+* `RationalTime.is_smpte_timecode_rate()` and `nearest_smpte_timecode_rate()`
+  are the preferred helper names; the older names remain available.
+* `to_nearest_timecode()` accepts an optional output rate and then an
+  `IsDropFrameRate` option, like `to_timecode()`. It snaps to a supported SMPTE
+  rate even when the requested rate is too far away for `to_timecode()`.
+
+Returned times are independently owned handles that need `delete()`.
+
 ## Schema features
 
 `Effect.enabled` defaults to `true` and is also available on `TimeEffect`,
@@ -121,8 +139,8 @@ colors, are independently owned handles that need `delete()`. `Color`, `V2d`, an
 The upstream packed-color channel-order and zero-SMPTE-rate fixes are included.
 
 `make build` prepares Emscripten's zlib port before CMake configuration for OTIO's
-new native bundle dependency. The bundle APIs themselves and previously missing
-OpenTime/editing APIs are not added by this compatibility sync.
+new native bundle dependency. The bundle APIs themselves and experimental editing
+APIs are not yet exposed.
 
 ## TODO
 
