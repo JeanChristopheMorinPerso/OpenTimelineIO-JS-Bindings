@@ -265,6 +265,12 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
                 [](OTIO_NS::Color const& lhs, OTIO_NS::Color const& rhs) {
                     return lhs == rhs;
                 }))
+        .function("to_abgr_int", &OTIO_NS::Color::to_abgr_int)
+        .class_function(
+            "from_abgr_int",
+            &OTIO_NS::Color::from_abgr_int,
+            ems::return_value_policy::take_ownership(),
+            ems::nonnull<ems::ret_val>())
         .class_function(
             "from_hex",
             &OTIO_NS::Color::from_hex,
@@ -287,10 +293,6 @@ EMSCRIPTEN_BINDINGS(opentimelineio)
             }),
             ems::return_value_policy::take_ownership(),
             ems::nonnull<ems::ret_val>())
-        // TODO: When syncing to OTIO 0.19, verify that upstream #2070 is included:
-        // https://github.com/AcademySoftwareFoundation/OpenTimelineIO/pull/2070
-        // Bind Color.from_abgr_int and Color.to_abgr_int, not the old agbr names.
-        // Test ABGR (0xAABBGGRR) round trips with unequal G/B and partial alpha.
         .class_property("PINK", &OTIO_NS::Color::pink)
         .class_property("RED", &OTIO_NS::Color::red)
         .class_property("ORANGE", &OTIO_NS::Color::orange)
