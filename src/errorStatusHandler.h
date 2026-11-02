@@ -5,7 +5,7 @@
 
 #include <opentimelineio/errorStatus.h>
 
-namespace otio = opentimelineio::OPENTIMELINEIO_VERSION;
+namespace otio = OTIO_NS;
 
 struct ErrorStatusHandler
 {

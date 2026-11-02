@@ -6,6 +6,23 @@ beforeAll(async () => {
     otio = await factory()
 })
 
+test.each([
+    [0xff00ff00, '#00ff00ff'],
+    [0xffff0000, '#0000ffff'],
+    [0x80362cd2, '#d22c3680']
+])('packed ABGR %i preserves channel order and alpha', (packed, hex) => {
+    const decoded = otio.Color.from_abgr_int(packed)
+    const encoded = otio.Color.from_hex(hex)
+    try {
+        expect(decoded.to_hex()).toBe(hex)
+        expect(decoded.to_abgr_int()).toBe(packed)
+        expect(encoded.to_abgr_int()).toBe(packed)
+    } finally {
+        decoded.delete()
+        encoded.delete()
+    }
+})
+
 test('Color exposes RGBA, conversions, and independently owned named colors', () => {
     const color = new otio.Color(0.25, 0.5, 0.75, 0.125, 'custom')
     const hex = otio.Color.from_hex('#12569abc')

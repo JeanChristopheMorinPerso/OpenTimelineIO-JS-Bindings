@@ -10,6 +10,7 @@ setup:
 	pnpm install --frozen-lockfile
 
 build:
+	./emsdk/upstream/emscripten/embuilder build zlib
 	mkdir -p build
 	cd build && \
 	cmake ../ \

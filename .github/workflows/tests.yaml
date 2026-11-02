@@ -27,6 +27,9 @@ jobs:
           cache: true
           install: false
 
+      - run: python3 -m pip install 'cmake>=3.31,<4'
+        name: Install CMake
+
       - run: make setup
         name: Setup
 

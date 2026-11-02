@@ -113,7 +113,6 @@ em_link_pre_js(opentime-js "${CMAKE_CURRENT_SOURCE_DIR}/pre.js")
 target_include_directories(opentime-js
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src"
-    PRIVATE "${PROJECT_BINARY_DIR}/deps/OpenTimelineIO/src"
     PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src/deps/Imath/src"
 )
 
@@ -151,7 +150,6 @@ em_link_pre_js(opentimelineio-js "${CMAKE_CURRENT_SOURCE_DIR}/pre.js")
 target_include_directories(opentimelineio-js
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src"
-    PRIVATE "${PROJECT_BINARY_DIR}/deps/OpenTimelineIO/src"
     PRIVATE "${PROJECT_SOURCE_DIR}/deps/OpenTimelineIO/src/deps/Imath/src"
 )
 

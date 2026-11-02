@@ -10,6 +10,12 @@ beforeAll(async () => {
     lib = await factory();
 });
 
+test('SMPTE rate selection does not accept or select zero', () => {
+    expect(lib.RationalTime.is_valid_timecode_rate(0)).toBe(false)
+    expect(lib.RationalTime.nearest_valid_timecode_rate(1)).toBe(24000 / 1001)
+    expect(lib.RationalTime.nearest_valid_timecode_rate(29.97)).toBe(30000 / 1001)
+})
+
 test('create', () => {
     let t_val = 30.2;
     const t = new lib.RationalTime(t_val);
