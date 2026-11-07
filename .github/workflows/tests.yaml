@@ -68,3 +68,83 @@ jobs:
           path: ${{ github.workspace }}/emscripten_cache
           key: ${{ steps.emscripten-cache.outputs.cache-primary-key }}
         if: (success() || failure()) && steps.emscripten-cache.outputs.cache-hit != 'true'
+
+  coverage:
+    name: C++ coverage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+
+      - uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
+        name: Install pnpm and Node.js
+        with:
+          runtime: node@20
+          cache: true
+          install: false
+
+      - run: python3 -m pip install 'cmake>=3.31,<4'
+        name: Install CMake
+
+      - name: Install LCOV 2.6
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libcapture-tiny-perl libdatetime-perl libdevel-stacktrace-perl libjson-xs-perl libtimedate-perl
+          curl -fsSL https://github.com/linux-test-project/lcov/releases/download/v2.6/lcov-2.6.tar.gz -o "$RUNNER_TEMP/lcov-2.6.tar.gz"
+          echo "67a45db99b8ef0260c3fac9a2e3749fd8fa350a15e235dd3c29b356d97755c75  $RUNNER_TEMP/lcov-2.6.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/lcov-2.6.tar.gz" -C "$RUNNER_TEMP"
+          sudo make -C "$RUNNER_TEMP/lcov-2.6" install LCOV_NO_DOC=1 LCOV_NO_XS=1
+          genhtml --version
+
+      - run: make setup
+        name: Setup
+
+      - run: echo "version=$(make emscripten-version)" >> $GITHUB_OUTPUT
+        id: emscripten-version
+        name: Get emscripten version
+
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        name: Restore emscripten cache
+        id: emscripten-cache
+        with:
+          path: ${{ github.workspace }}/emscripten_cache
+          key: ${{ runner.os }}-emscripten-${{ steps.emscripten-version.outputs.version }}-Coverage
+
+      - run: make build BUILD_TYPE=Coverage
+        name: Build
+        env:
+          EM_CACHE: ${{ github.workspace }}/emscripten_cache
+
+      - run: make install
+        name: Install
+
+      - run: pnpm run coverage
+        name: Test with coverage
+
+      # JavaScript coverage includes generated Emscripten/Embind glue, so keep
+      # it in the artifact for inspection rather than mixing it into Codecov.
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
+        with:
+          files: coverage/cpp.lcov
+          disable_search: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        name: Upload C++ and JavaScript coverage reports
+        with:
+          name: coverage
+          path: coverage/
+        if: success() || failure()
+
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        name: Save emscripten cache
+        with:
+          path: ${{ github.workspace }}/emscripten_cache
+          key: ${{ steps.emscripten-cache.outputs.cache-primary-key }}
+        if: (success() || failure()) && steps.emscripten-cache.outputs.cache-hit != 'true'
