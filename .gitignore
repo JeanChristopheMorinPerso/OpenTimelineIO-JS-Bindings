@@ -2,6 +2,7 @@ build
 emsdk
 node_modules
 install
+/coverage/
 repros
 .vscode
 scripts/*.js

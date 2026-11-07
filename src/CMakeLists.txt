@@ -51,6 +51,9 @@ endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 if (CMAKE_BUILD_TYPE MATCHES Debug)
     string(APPEND JS_LINK_FLAGS "-lembind -O0 -g3 -gsource-map -fsanitize=address --source-map-base http://localhost:8000/install/ --profile ")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Coverage")
+    # The unoptimized OTIO file reader needs more than the default 64 KiB stack.
+    string(APPEND JS_LINK_FLAGS "-lembind -O0 -g -fprofile-instr-generate -fcoverage-mapping -sNODERAWFS -sSTACK_SIZE=1048576 -sSTACK_OVERFLOW_CHECK=2 -sEXPORTED_FUNCTIONS=___llvm_profile_write_file,___llvm_profile_set_filename,_free -sEXPORTED_RUNTIME_METHODS=stringToNewUTF8 ")
 else()
     string(APPEND JS_LINK_FLAGS "-flto -Os -lembind ")
     string(APPEND JS_COMPILE_FLAGS "-flto -Os ")
@@ -155,6 +158,12 @@ target_include_directories(opentimelineio-js
 
 set(OPENTIMELINEIO_TSD "${CMAKE_CURRENT_BINARY_DIR}/opentimelineio.d.ts")
 emit_typescript_declarations(opentimelineio-js "${OPENTIMELINEIO_TSD}")
+
+if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
+    foreach(target opentime-js opentimelineio-js)
+        em_link_post_js(${target} "${CMAKE_CURRENT_SOURCE_DIR}/coverage-post.cjs")
+    endforeach()
+endif()
 
 # Install
 install(TARGETS opentime-js DESTINATION ${CMAKE_INSTALL_PREFIX})

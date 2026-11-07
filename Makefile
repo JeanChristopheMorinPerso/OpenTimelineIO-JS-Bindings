@@ -2,6 +2,7 @@
 
 BUILD_TYPE ?= Release
 EMSCRIPTEN_VERSION ?= 7.0.0
+JOBS ?= 16
 
 setup:
 	git clone https://github.com/emscripten-core/emsdk.git
@@ -18,7 +19,7 @@ build:
 		-DCMAKE_TOOLCHAIN_FILE=$(shell pwd)/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
 		-DCMAKE_BUILD_TYPE=$(BUILD_TYPE)
 	# Emscripten's --emit-tsd invokes the TypeScript compiler from node_modules.
-	cd build && PATH=$(shell pwd)/node_modules/.bin:$$PATH cmake --build . -j 16
+	cd build && PATH=$(shell pwd)/node_modules/.bin:$$PATH cmake --build . -j $(JOBS)
 
 install:
 	cd build && cmake --install .
@@ -26,6 +27,7 @@ install:
 clean:
 	rm -rf build
 	rm -rf install
+	rm -rf coverage
 
 emscripten-version:
 	@echo $(EMSCRIPTEN_VERSION)
