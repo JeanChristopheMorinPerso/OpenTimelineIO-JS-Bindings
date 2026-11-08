@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OTIO API surface tracker</title>
+<style>
+*{box-sizing:border-box}
+:root{--text:#263342;--secondary:#3e4b59;--page:#fafbfc;--surface:#fff;--subtle:#edf1f5;--hover:#f5f8fc;--link:#124984;--border:#596573;--divider:#dfe5eb;--missing-bg:#fbe8e6;--missing-text:#75251f;--exposed-bg:#e4f3eb;--exposed-text:#174b32;--mismatch-bg:#fff0ce;--mismatch-text:#63400b}
+body{font:1rem/1.5 system-ui,sans-serif;color:var(--text);margin:32px;background:var(--page)}
+body[data-theme="dark"]{color-scheme:dark;--text:#f1f5f9;--secondary:#dae1e9;--page:#101820;--surface:#18232e;--subtle:#253442;--hover:#253442;--link:#b9dcff;--border:#bbc5cf;--divider:#67717e;--missing-bg:#422323;--missing-text:#ffd6d2;--exposed-bg:#16392b;--exposed-text:#ceffe4;--mismatch-bg:#40331a;--mismatch-text:#ffe8b8}
+body[data-theme="system"]{color-scheme:light dark;--text:CanvasText;--secondary:CanvasText;--page:Canvas;--surface:Canvas;--subtle:Canvas;--hover:Canvas;--link:LinkText;--border:CanvasText;--divider:CanvasText;--missing-bg:Canvas;--missing-text:CanvasText;--exposed-bg:Canvas;--exposed-text:CanvasText;--mismatch-bg:Canvas;--mismatch-text:CanvasText}
+main{max-width:1500px;margin:auto}
+h1{font-size:1.75rem;margin-bottom:8px}
+h2,legend{font-size:1.125rem;font-weight:700}
+p{line-height:1.5;max-width:75ch;margin-block:2.25em;overflow-wrap:anywhere;text-align:left}
+a{color:var(--link);text-decoration:underline}
+.muted,small{color:var(--secondary)}
+small{display:block;font-size:.875rem;margin-top:5px;overflow-wrap:anywhere}
+.cards{display:flex;gap:16px;flex-wrap:wrap;margin:24px 0}
+.card{background:var(--surface);border:1px solid var(--divider);border-radius:6px;padding:18px;min-width:160px;flex:1}
+.card strong{display:block;font-size:1.875rem;margin-bottom:4px}
+fieldset{border:0;padding:0;margin:24px 0 12px;min-width:0}
+legend{padding:0}
+.toolbar{display:flex;gap:16px;align-items:end;flex-wrap:wrap;margin-top:12px}
+label{display:flex;flex-direction:column;gap:6px;font-weight:600}
+input,select{font:inherit;border:1px solid var(--border);border-radius:4px;padding:9px;background:var(--surface);color:inherit;min-height:44px;max-width:100%}
+input{min-width:260px}
+input::placeholder{color:var(--secondary);opacity:1}
+:is(a,input,select,summary):focus{outline:3px solid var(--link);outline-offset:3px}
+.scroll{position:relative;overflow:auto;border:1px solid var(--divider);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9375rem}
+th{text-align:left}
+thead th{background:var(--subtle);white-space:nowrap}
+tbody th{font-weight:400;min-width:260px}
+th,td{padding:12px;border-bottom:1px solid var(--divider);vertical-align:top}
+code{overflow-wrap:anywhere}
+tbody tr:hover{background:var(--hover)}
+.badge{display:inline-block;padding:5px 9px;border:2px solid currentColor;border-radius:4px;white-space:nowrap;font-size:.875rem;font-weight:700}
+.status-symbol{display:inline-block;margin-right:6px;font-size:1rem}
+.missing{background:var(--missing-bg);color:var(--missing-text);border-style:dashed}
+.exposed{background:var(--exposed-bg);color:var(--exposed-text)}
+.shape-mismatch{background:var(--mismatch-bg);color:var(--mismatch-text);border-style:double;border-width:3px}
+.language-specific{background:var(--subtle);color:var(--secondary);border-style:dotted}
+summary{cursor:pointer;color:var(--link);margin-top:8px;padding:10px 4px;min-width:44px;min-height:44px;text-decoration:underline}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;max-width:75ch;font-size:.875rem;line-height:1.5}
+#groups{display:flex;flex-wrap:wrap;gap:10px}
+#groups span{background:var(--subtle);padding:8px 12px;border-radius:4px}
+.empty{text-align:center;padding:30px}
+.scope{border-left:3px solid var(--border);padding-left:16px}
+.cell-label{display:none}
+body[data-layout="reading"] table,body[data-layout="reading"] tbody,body[data-layout="reading"] tr,body[data-layout="reading"] td,body[data-layout="reading"] tbody th{display:block}
+body[data-layout="reading"] thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+body[data-layout="reading"] tr{padding:16px;border-bottom:2px solid var(--border)}
+body[data-layout="reading"] td,body[data-layout="reading"] tbody th{min-width:0;padding:8px 0;border:0;max-width:75ch}
+body[data-layout="reading"] .cell-label{display:block;font-weight:700;margin-bottom:4px}
+body[data-layout="reading"] .scroll{overflow:visible}
+.sr-only{position:absolute;top:0;left:0;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+@media(max-width:600px){body{margin:16px}.card{min-width:130px;padding:12px}.card strong{font-size:1.5rem}.toolbar label,input,select{width:100%}input{min-width:0}h1{font-size:1.5rem}}
+</style>
+</head>
+<body><main>
+<h1>OTIO API surface tracker</h1>
+<p class="muted">What exists in upstream Python, and what is still missing from JavaScript?</p>
+<p id="revision"></p>
+<fieldset><legend>Display preferences</legend><div class="toolbar">
+<label>Colors<select id="theme"><option value="light">Light (high contrast)</option><option value="dark">Dark (high contrast)</option><option value="system">Use browser colors</option></select></label>
+<label>Layout<select id="layout"><option value="table">Comparison table</option><option value="reading">Reading view (no horizontal scrolling)</option></select></label>
+</div></fieldset>
+<p>Use reading view for a narrow window or enlarged text. “Use browser colors” respects the text and background colors selected in your browser or operating system.</p>
+<section class="cards" aria-label="Exposure summary" id="cards"></section>
+<div class="scope">
+<p><strong>Exposure, not test coverage or full API parity.</strong> A row labeled “exposed” means the JavaScript name and member kind match. Overloads, constructor arguments, defaults, return types and correctness are not checked. Matching classes can still have missing members.</p>
+<p>The baseline is the pinned Python <code>opentime</code>, <code>core</code>, <code>schema</code> and <code>algorithms</code> APIs, plus native <code>_otio.bundle</code>. It includes Python convenience functions. It does not inventory the entire C++ header surface, experimental C++ editing APIs, adapters, plugins, CLI, exceptions or private helpers. Python protocols are shown separately and excluded from totals. Inherited members are checked on each class; re-exported class/function aliases are counted once.</p>
+<p>JavaScript is inspected from <code>install/</code>, including handwritten wrappers and properties, without calling API methods or getters. Rebuild and install after changing bindings or the OTIO pin. <a id="download-evidence" download="api-surface.json">Download JSON evidence</a></p>
+</div>
+<h2>Exposure by reference group</h2><div id="groups"></div>
+<fieldset><legend>Filter APIs</legend>
+<div class="toolbar">
+<label>Search API<input id="search" type="search" placeholder="API name or keyword"></label>
+<label>Status<select id="status"><option value="gaps">Missing + shape mismatches</option><option value="all">All counted APIs</option><option value="missing">Missing only</option><option value="shape mismatch">Shape mismatches</option><option value="exposed">Exposed only</option><option value="language-specific">Python protocols (not counted)</option></select></label>
+<label>Group<select id="group"><option value="all">All groups</option></select></label>
+<label>Kind<select id="kind"><option value="all">All kinds</option></select></label>
+</div>
+</fieldset>
+<h2 id="comparison-heading">API comparison</h2>
+<p>An API is a class, function, or member that a program can use. “Missing” means no matching JavaScript name was found. “Shape mismatch” means the name exists, but its form differs, such as a method instead of a property. “Exposed” does not prove the behavior matches.</p>
+<p id="results" role="status" aria-live="polite" aria-atomic="true"></p>
+<div class="scroll" role="region" aria-labelledby="comparison-heading" aria-describedby="results"><table role="table"><caption class="sr-only">Python reference APIs compared with installed JavaScript bindings</caption><thead role="rowgroup"><tr role="row"><th role="columnheader" scope="col">Status</th><th role="columnheader" scope="col">Python API</th><th role="columnheader" scope="col">Kind</th><th role="columnheader" scope="col">JavaScript evidence / gap</th><th role="columnheader" scope="col">Declared on</th></tr></thead><tbody id="rows" role="rowgroup"></tbody></table></div>
+<p class="muted">Reference inventory is cached per upstream commit. Remove <code>api-coverage/reference-*.json</code> to rebuild it. Generated reports are local, reproducible outputs; they are not a hand-maintained checklist.</p>
+</main>
+<script>
+const report = /* API_DATA */null;
+const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+const statusSymbols = { missing: '×', exposed: '✓', 'shape mismatch': '≠', 'language-specific': '•' };
+const summary = report.summary;
+document.getElementById('download-evidence').href = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }));
+document.querySelector('#revision').innerHTML = `Reference: OTIO <code>${escape(report.referenceVersion)}</code> · <a href="https://github.com/AcademySoftwareFoundation/OpenTimelineIO/commit/${report.revision}"><code>${report.revision.slice(0,12)}</code></a> · Generated ${escape(new Date(report.generatedAt).toLocaleString())}`;
+document.querySelector('#cards').innerHTML = [
+    [`${(100 * summary.exposed / summary.total).toFixed(1)}%`, 'Name + kind exposure'],
+    [`${summary.exposed} / ${summary.total}`, 'Exposed reference entries'],
+    [summary.missing, 'Missing entries'], [summary.mismatched, 'Shape mismatches'],
+].map(([value, label]) => `<div class="card"><strong>${value}</strong>${label}</div>`).join('');
+const groups = [...new Set(report.rows.map(row => row.group))].sort();
+document.querySelector('#group').innerHTML += groups.map(group => `<option>${escape(group)}</option>`).join('');
+document.querySelector('#kind').innerHTML += [...new Set(report.rows.map(row => row.kind))].sort().map(kind => `<option>${escape(kind)}</option>`).join('');
+document.querySelector('#groups').innerHTML = groups.map(group => {
+    const rows = report.rows.filter(row => row.group === group && !row.protocol);
+    return `<span><strong>${escape(group)}</strong> ${rows.filter(row => row.status === 'exposed').length} / ${rows.length}</span>`;
+}).join('');
+function render() {
+    const query = document.querySelector('#search').value.toLowerCase();
+    const status = document.querySelector('#status').value;
+    const group = document.querySelector('#group').value;
+    const kind = document.querySelector('#kind').value;
+    const rows = report.rows.filter(row => {
+        const matchStatus = status === 'gaps' ? ['missing','shape mismatch'].includes(row.status)
+            : status === 'all' ? !row.protocol : row.status === status;
+        return matchStatus && (group === 'all' || row.group === group) && (kind === 'all' || row.kind === kind)
+            && `${row.group}.${row.name} ${row.note} ${(row.aliases || []).join(' ')}`.toLowerCase().includes(query);
+    }).sort((a,b) => `${a.group}.${a.name}`.localeCompare(`${b.group}.${b.name}`));
+    document.querySelector('#results').textContent = `${rows.length} matching entries`;
+    document.querySelector('thead').hidden = rows.length === 0;
+    document.querySelector('#rows').innerHTML = rows.map(row => `<tr role="row">
+        <td role="cell"><span class="cell-label" aria-hidden="true">Status</span><span class="badge ${row.status.replaceAll(' ','-')}"><span class="status-symbol" aria-hidden="true">${statusSymbols[row.status]}</span>${escape(row.status)}</span></td>
+        <th role="rowheader" scope="row"><span class="cell-label" aria-hidden="true">Python API</span><code>${escape(row.group)}.${escape(row.name)}</code>${row.aliases?.length ? `<small>Also: ${row.aliases.map(escape).join(', ')}</small>` : ''}</th>
+        <td role="cell"><span class="cell-label" aria-hidden="true">Kind</span>${escape(row.kind)}</td><td role="cell"><span class="cell-label" aria-hidden="true">JavaScript evidence / gap</span>${escape(row.note)}<small>Module: ${escape(row.module)} · Expected: ${escape(row.target)}</small>${row.doc || row.constructorDoc ? `<details><summary>Python reference documentation<span class="sr-only"> for ${escape(row.group)}.${escape(row.name)}</span></summary><pre>${escape(row.doc)}${row.constructorDoc ? '\n\nConstructor (not compared):\n' + escape(row.constructorDoc) : ''}</pre></details>` : ''}</td>
+        <td role="cell"><span class="cell-label" aria-hidden="true">Declared on</span>${escape(row.owner || '—')}<small>${escape(row.origin)}</small></td></tr>`).join('') || '<tr role="row"><td role="cell" colspan="5" class="empty">No matching APIs. Try another search or filter.</td></tr>';
+}
+document.getElementById('theme').addEventListener('change', event => { document.body.dataset.theme = event.target.value; });
+document.getElementById('layout').addEventListener('change', event => { document.body.dataset.layout = event.target.value; });
+document.getElementById('search').addEventListener('input', render);
+for (const id of ['status','group','kind']) document.getElementById(id).addEventListener('change', render);
+render();
+</script>
+</body></html>

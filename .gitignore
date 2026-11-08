@@ -3,6 +3,7 @@ emsdk
 node_modules
 install
 /coverage/
+/api-coverage/
 repros
 .vscode
 scripts/*.js
