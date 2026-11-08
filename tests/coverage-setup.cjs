@@ -1,4 +1,5 @@
 const { afterAll, expect } = require('@jest/globals')
+const fs = require('node:fs')
 const path = require('node:path')
 
 /* global process */
@@ -20,5 +21,10 @@ afterAll(() => {
         } finally {
             module._free(pointer)
         }
+        fs.writeFileSync(filename.replace(/\.profraw$/, '.bindings.json'), JSON.stringify({
+            testFile: path.relative(process.cwd(), expect.getState().testPath),
+            module: module.RationalTime && module.SerializableObject ? 'opentimelineio' : 'opentime',
+            bindings: module.__otioBindingCoverage,
+        }))
     }
 })
