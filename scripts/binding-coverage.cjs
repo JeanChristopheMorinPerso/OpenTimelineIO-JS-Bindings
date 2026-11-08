@@ -1,6 +1,7 @@
 const fs = require('node:fs')
 const path = require('node:path')
 const { execFileSync } = require('node:child_process')
+const syntheticCoverage = require('./synthetic-coverage.cjs')
 
 // Keep JavaScript entry-point evidence separate from LLVM function coverage:
 // C++ may call an implementation without entering any JavaScript binding.
@@ -72,6 +73,13 @@ module.exports = function writeBindingCoverage(coverageDir) {
     const entered = bindings.filter(row => row.calls > 0).length
     const reached = bindings.filter(row => row.cppCalls > 0).length
     fs.writeFileSync(path.join(coverageDir, 'bindings.json'), JSON.stringify(bindings, null, 2))
+    const syntheticFile = path.join(coverageDir, 'bindings-synthetic.lcov')
+    fs.writeFileSync(syntheticFile, syntheticCoverage(bindings, root))
+    execFileSync('genhtml', [syntheticFile,
+        '--output-directory', path.join(coverageDir, 'bindings-synthetic'),
+        '--prefix', root, '--title', 'bindings-synthetic: all overloads must reach C++',
+        '--rc', 'derive_function_end_line=0', '--precision', '2', '--legend',
+    ], { stdio: 'inherit' })
     const escape = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' })[char])
     if (sources.size) {
         fs.mkdirSync(path.join(coverageDir, 'binding-sources'), { recursive: true })
@@ -90,6 +98,7 @@ module.exports = function writeBindingCoverage(coverageDir) {
 <p>Each row is a registered Embind method, free function, or constructor signature, scoped to its module. C++ invoker calls occur after argument conversion. Completed means the call returned normally; thrown calls can include conversion errors or C++ exceptions. These counts do not prove result assertions or all argument values were tested.</p>
 <p>Signature links open the binding registration line in the LCOV source report. SDK-generated registrations link to a source snapshot instead. These are declaration locations, not inferred upstream implementation locations.</p>
 <p><a href="cpp/index.html">C++ source, function and branch coverage</a> · <a href="javascript/lcov-report/index.html">Generated JavaScript coverage</a> · <a href="bindings.json">Download overload evidence</a></p>
+<p><a href="bindings-synthetic/index.html">bindings-synthetic: red/green declarations</a> — a declaration is green only when all signatures at that line, across both modules, reached C++. Only registration lines are measured; this is not C++ execution coverage.</p>
 <p>Property accessors, handwritten JavaScript wrappers and JavaScript subclass constructors are not enumerated by this invoker factory. Invalid argument counts rejected by the overload selector do not enter a registered signature. Test files identify where calls occurred, not which assertions validated them. No upstream function hit is inferred to be a JavaScript call.</p></header>
 <table><thead><tr><th>Module</th><th>Registered signature</th><th>Args</th><th>JS entries</th><th>C++ invoker</th><th>Completed</th><th>Threw</th><th>Calling test files</th></tr></thead><tbody>${body}</tbody></table></body></html>`)
     return { registered: bindings.length, entered, reached }

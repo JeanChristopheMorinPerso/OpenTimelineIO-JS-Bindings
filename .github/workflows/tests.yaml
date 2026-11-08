@@ -132,11 +132,22 @@ jobs:
         with:
           files: coverage/cpp.lcov
           disable_search: true
+          flags: cpp
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      # Synthetic declaration coverage measures overload exercise, not C++ execution.
+      - name: Upload synthetic binding coverage to Codecov
+        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
+        with:
+          files: coverage/bindings-synthetic.lcov
+          disable_search: true
+          flags: bindings-synthetic
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
-        name: Upload C++ and JavaScript coverage reports
+        name: Upload coverage and custom overload reports
         with:
           name: coverage
           path: coverage/
