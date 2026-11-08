@@ -161,6 +161,7 @@ emit_typescript_declarations(opentimelineio-js "${OPENTIMELINEIO_TSD}")
 
 if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
     foreach(target opentime-js opentimelineio-js)
+        em_link_pre_js(${target} "${CMAKE_CURRENT_SOURCE_DIR}/coverage-pre.cjs")
         em_link_post_js(${target} "${CMAKE_CURRENT_SOURCE_DIR}/coverage-post.cjs")
     endforeach()
 endif()

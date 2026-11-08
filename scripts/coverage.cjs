@@ -1,6 +1,7 @@
 const { execFileSync, spawnSync } = require('node:child_process')
 const fs = require('node:fs')
 const path = require('node:path')
+const writeBindingCoverage = require('./binding-coverage.cjs')
 
 /* global __dirname, process */
 const root = path.resolve(__dirname, '..')
@@ -143,6 +144,9 @@ if (genhtml.status !== 0 || unexpected.length > 0) {
 }
 console.log(`Accepted ${caseLabels.size} unexecuted switch case labels carrying Clang's case branch counts.`)
 
+const bindings = writeBindingCoverage(coverageDir)
+console.log(`Binding overloads: ${bindings.entered}/${bindings.registered} entered, ${bindings.reached}/${bindings.registered} reached C++`)
+console.log(`Binding report: ${path.join(coverageDir, 'bindings.html')}`)
 console.log(`C++ report: ${path.join(coverageDir, 'cpp/index.html')}`)
 console.log(`JavaScript report: ${path.join(coverageDir, 'javascript/lcov-report/index.html')}`)
 // Partial reports are still useful, but must not hide a failed test run.
