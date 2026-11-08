@@ -122,6 +122,31 @@ jobs:
       - run: make install
         name: Install
 
+      - run: node --test scripts/api-coverage.test.cjs && pnpm api-coverage
+        name: Generate API surface report
+        id: api-report
+
+      # Direct uploads use the filename as the artifact name and render HTML
+      # in the browser. Only upload the page, not the Python reference cache.
+      - run: cp api-coverage/index.html "$RUNNER_TEMP/api-coverage.html"
+        name: Prepare standalone API report
+        id: api-report-file
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        name: Upload browser-viewable API report
+        id: api-report-artifact
+        with:
+          path: ${{ runner.temp }}/api-coverage.html
+          archive: false
+          if-no-files-found: error
+        if: always() && steps.api-report-file.outcome == 'success'
+
+      - name: Link API report
+        run: printf '[View API surface report](%s)\n' "$API_REPORT_URL" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          API_REPORT_URL: ${{ steps.api-report-artifact.outputs.artifact-url }}
+        if: always() && steps.api-report-artifact.outcome == 'success'
+
       - run: pnpm run coverage
         name: Test with coverage
 
