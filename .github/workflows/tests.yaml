@@ -130,9 +130,29 @@ jobs:
       - run: make install
         name: Install
 
+      - name: Get OTIO revision
+        id: otio-revision
+        run: echo "revision=$(git -C deps/OpenTimelineIO rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # Only the pinned Python inventory is reusable. Always inspect the freshly
+      # built JavaScript bindings and regenerate the report; never cache either.
+      - uses: actions/cache/restore@v6.1.0
+        name: Restore API reference cache
+        id: api-reference-cache
+        with:
+          path: api-coverage/reference-*.json
+          key: ${{ runner.os }}-api-reference-v1-${{ steps.otio-revision.outputs.revision }}-${{ hashFiles('scripts/api-reference.py') }}
+
       - run: node --test scripts/api-coverage.test.cjs && pnpm api-coverage
         name: Generate API surface report
         id: api-report
+
+      - uses: actions/cache/save@v6.1.0
+        name: Save API reference cache
+        with:
+          path: api-coverage/reference-*.json
+          key: ${{ steps.api-reference-cache.outputs.cache-primary-key }}
+        if: success() && steps.api-reference-cache.outputs.cache-hit != 'true'
 
       # Direct uploads use the filename as the artifact name and render HTML
       # in the browser. Only upload the page, not the Python reference cache.
