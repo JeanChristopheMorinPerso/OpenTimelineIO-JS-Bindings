@@ -4,6 +4,8 @@ on:
   push:
   pull_request:
 
+permissions: {}
+
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
@@ -12,8 +14,12 @@ jobs:
   cpp:
     name: cpp
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: jidicula/clang-format-action@v4.18.0
         name: clang-format
@@ -24,8 +30,12 @@ jobs:
   js:
     name: js
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: pnpm/setup@v3.1.2
         name: Install pnpm and Node.js
@@ -39,3 +49,20 @@ jobs:
 
       - run: pnpm exec eslint .
         name: ESLint
+
+  zizmor:
+    name: zizmor
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # Upload zizmor findings to GitHub code scanning.
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: zizmorcore/zizmor-action@v0.8.1
+        name: Audit GitHub Actions
+        with:
+          persona: auditor
+          advanced-security: true
