@@ -39,7 +39,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: pnpm/setup@v3.1.2
+      - uses: pnpm/setup@v3.2.0
         name: Install pnpm and Node.js
         with:
           runtime: node@20
