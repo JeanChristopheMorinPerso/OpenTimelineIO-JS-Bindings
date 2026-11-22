@@ -6,14 +6,14 @@ workflows:
     '.github/workflows/lint.yaml':
         - 'actions/checkout@v7.0.1'
         - 'jidicula/clang-format-action@v4.18.0'
-        - 'pnpm/setup@v3.1.2'
+        - 'pnpm/setup@v3.2.0'
         - 'zizmorcore/zizmor-action@v0.8.1'
     '.github/workflows/tests.yaml':
         - 'actions/cache@v6.1.0'
         - 'actions/checkout@v7.0.1'
         - 'actions/upload-artifact@v7.0.2'
         - 'codecov/codecov-action@v7.1.1'
-        - 'pnpm/setup@v3.1.2'
+        - 'pnpm/setup@v3.2.0'
 dependencies:
     'actions/cache@v6.1.0':
         ref: 'v6.1.0'
@@ -52,9 +52,9 @@ dependencies:
         commit: 'sha1-654a770daa28443dd111d133e4083e21c1075674'
         owner_id: 12765385
         repo_id: 250397925
-    'pnpm/setup@v3.1.2':
-        ref: 'v3.1.2'
-        commit: 'sha1-fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e'
+    'pnpm/setup@v3.2.0':
+        ref: 'v3.2.0'
+        commit: 'sha1-731dfb6463bbd11c11fd0ee11fe00ed0e36d48a1'
         owner_id: 21320719
         repo_id: 1235693694
     'zizmorcore/zizmor-action@v0.8.1':
